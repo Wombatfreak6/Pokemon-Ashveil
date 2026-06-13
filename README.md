@@ -86,8 +86,9 @@ The game targets the original Game Boy Advance resolution:
 
 | Key | Action |
 |-----|--------|
-| Arrow keys | Move player |
+| Arrow keys | Move player / buffer movement |
 | W / A / S / D | Move player (alternative) |
+| Z / Enter / Space | Confirm / Interact / Advance Dialogue |
 
 ---
 
@@ -95,9 +96,17 @@ The game targets the original Game Boy Advance resolution:
 
 ### Grid-Based Movement
 The player moves **exactly one tile (16 px) per key press** via a Phaser tween  
-(duration: 175 ms, `ease: Linear`).  Input is ignored while a tween is running.  
-Collision is checked **before** the tween starts — if the target tile exists in  
-the Collision layer, movement is blocked and the player faces that direction.
+(duration: 175 ms, `ease: Linear`). Input buffering is implemented: pressing a  
+direction key during a movement tween will queue it and execute it on completion,  
+providing smooth continuous movement. Collision is checked **before** the tween  
+starts — if the target tile exists in the Collision layer, movement is blocked.
+
+### Dialogue System
+The dialogue box is a screen-fixed GBA-style overlay rendering at 240x52 px at  
+the bottom of the screen. Text is revealed using typewriter animation at a rate  
+of 28 characters per second. The player can press confirm during reveal to skip  
+directly to the full line, and press confirm again to advance to the next line or  
+dismiss the text box. The dialogue system is JSON-driven and caches all dialogue sequences on boot.
 
 ### Camera
 Uses `startFollow` with `lerpX/Y = 0.08` (smooth GBA-style tracking).  
@@ -182,10 +191,11 @@ a Vite build system — no code from the original repository is used.
 | Session | Date | Status | Summary |
 |---------|------|--------|---------|
 | Session 1 | 2026-06-13 | ✅ Complete | Foundation: Vite+TS+Phaser 3, tilemap, grid movement, collision, camera |
+| Session 2 | 2026-06-14 | ✅ Complete | Dialogue & NPCs: GBA text box, Tiled object mapping, confirm interact, input buffering |
 
 ---
 
-## Known Issues / TODOs for Session 2
+## Known Issues / TODOs for Session 3
 
 - Placeholder procedural art needs replacing with real pixel sprites
 - No tile extrusion (not needed for procedural textures; add if using real tilesets with bleeding)

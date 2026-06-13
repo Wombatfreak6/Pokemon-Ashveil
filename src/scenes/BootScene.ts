@@ -37,12 +37,18 @@ export class BootScene extends Phaser.Scene {
 
     // Load the Tiled JSON map. Vite serves files in /public as root-relative paths.
     this.load.tilemapTiledJSON("test-map", "assets/maps/test_map.tmj");
+
+    // Load dialogue data. Loaded as a JSON file — Phaser.Loader.LoaderPlugin
+    // stores it under the key 'dialogue-npcs' and it is retrieved in
+    // OverworldScene via this.cache.json.get('dialogue-npcs').
+    this.load.json("dialogue-npcs", "assets/data/dialogue/test_npcs.json");
   }
 
   create(): void {
     // Build placeholder textures synchronously after load completes.
     this.createTilesetTexture();
     this.createPlayerTexture();
+    this.createNpcTexture();
 
     this.scene.start("OverworldScene");
   }
@@ -314,6 +320,83 @@ export class BootScene extends Phaser.Scene {
       const row = Math.floor(i / COLS);
       tex.add(i, 0, col * FW, row * FH, FW, FH);
     }
+
+    tex.refresh();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Procedural NPC texture
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Generates the "npc" CanvasTexture: a 16×16 pixel sprite.
+   *
+   * NPCs are visually distinct from the player:
+   *   - Rounder head shape
+   *   - No hat
+   *   - Yellow body (coat) instead of blue shirt
+   *   - A small question mark on the torso (classic Pokémon cue)
+   *
+   * In-world each NPC gets a unique .setTint() colour applied by OverworldScene
+   * so three NPCs are immediately distinguishable from one another.
+   *
+   * When real NPC art is ready:
+   *   - Add this.load.spritesheet('npc', 'assets/sprites/npc.png', {…}) to preload()
+   *   - Delete this method and its call in create()
+   */
+  private createNpcTexture(): void {
+    const FW = 16;
+    const FH = 16;
+
+    if (this.textures.exists("npc")) {
+      this.textures.remove("npc");
+    }
+
+    const tex = this.textures.createCanvas("npc", FW, FH);
+    if (!tex) return;
+
+    const c = tex.context;
+
+    // Shadow
+    c.globalAlpha = 0.2;
+    c.fillStyle = "#000000";
+    c.beginPath();
+    c.ellipse(8, 15, 4, 1.5, 0, 0, Math.PI * 2);
+    c.fill();
+    c.globalAlpha = 1;
+
+    // Body / coat (yellow)
+    c.fillStyle = "#c8a020";
+    c.fillRect(4, 7, 8, 5);
+
+    // Head (rounder — slightly wider)
+    c.fillStyle = "#f0c890";
+    c.fillRect(4, 1, 8, 6);
+
+    // Eyes (two dots, centred, facing down/camera)
+    c.fillStyle = "#1a1a2e";
+    c.fillRect(6, 3, 1, 1);
+    c.fillRect(9, 3, 1, 1);
+
+    // Smile line
+    c.fillRect(6, 5, 4, 1);
+
+    // Hair tuft on top
+    c.fillStyle = "#5c3a1a";
+    c.fillRect(5, 0, 6, 2);
+
+    // Legs
+    c.fillStyle = "#2a2a4a";
+    c.fillRect(5, 12, 3, 3);
+    c.fillRect(8, 12, 3, 3);
+
+    // Question mark on coat (classic NPC cue)
+    c.fillStyle = "#ffffff";
+    c.globalAlpha = 0.7;
+    c.fillRect(8, 8, 1, 1); // dot
+    c.fillRect(7, 7, 2, 1); // top
+    c.fillRect(8, 7, 1, 2); // stem + hook
+    c.globalAlpha = 1;
 
     tex.refresh();
   }

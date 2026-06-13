@@ -33,6 +33,7 @@ export const MOVE_DURATION = 175;
 export class Player extends Phaser.Physics.Arcade.Sprite {
   private isMoving = false;
   private facing: Direction = "down";
+  private bufferedDirection: Direction | null = null;
 
   // Reference to the collision tilemap layer — injected after construction.
   private collisionLayer: Phaser.Tilemaps.TilemapLayer | null = null;
@@ -82,14 +83,26 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   /**
+   * Returns the direction the player is currently facing.
+   */
+  getFacing(): Direction {
+    return this.facing;
+  }
+
+  /**
    * Called each frame by OverworldScene.update().
    * @param direction — result of InputController.getDirection(); null = no input
    */
   handleInput(direction: Direction | null): void {
-    if (this.isMoving) return; // Movement tween in progress — ignore all input
-    if (direction === null) return; // No key held
+    if (this.isMoving) {
+      this.bufferedDirection = direction;
+      return;
+    }
+
+    if (direction === null) return;
 
     this.facing = direction;
+    this.bufferedDirection = null;
 
     const dx = direction === "left" ? -1 : direction === "right" ? 1 : 0;
     const dy = direction === "up" ? -1 : direction === "down" ? 1 : 0;
@@ -136,7 +149,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       ease: "Linear",
       onComplete: () => {
         this.isMoving = false;
-        this.anims.play(`idle-${this.facing}`, true);
+        if (this.bufferedDirection !== null) {
+          const nextDir = this.bufferedDirection;
+          this.bufferedDirection = null;
+          this.handleInput(nextDir);
+        } else {
+          this.anims.play(`idle-${this.facing}`, true);
+        }
       },
     });
   }

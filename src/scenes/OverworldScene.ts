@@ -1,31 +1,40 @@
 import Phaser from "phaser";
-import { Player } from "@entities/Player";
+import { Player, TILE_SIZE } from "@entities/Player";
+import { NPC } from "@entities/NPC";
 import { InputController } from "@systems/InputController";
+import { DialogueBox } from "@systems/DialogueBox";
+import type { DialogueSequence } from "@systems/DialogueTypes";
 
 /**
  * OverworldScene — the main overworld / exploration scene.
  *
- * Responsibilities:
+ * Responsibilities (Session 1 + 2):
  *   • Create and configure the Tiled tilemap
  *   • Instantiate the Player and wire up collision
+ *   • Instantiate NPC entities from the "NPCs" object layer
+ *   • Instantiate DialogueBox and load dialogue sequences from JSON cache
  *   • Set camera bounds and follow behaviour
  *   • Delegate all input handling to InputController
  *   • Delegate all player movement logic to Player
+ *   • Gate player movement when dialogue is active
+ *   • Handle confirm-key NPC interaction (face + adjacent check)
  *
- * This scene intentionally contains NO movement or physics logic directly.
- * Those concerns live in Player.ts and InputController.ts respectively.
+ * CAMERA: Lerp-follow (lerpX/Y = 0.08) — smooth GBA-style tracking.
  *
- * CAMERA DECISION
- * ===============
- * Lerp-follow (lerpX/Y = 0.08) rather than snap-follow.
- * Rationale: the lerp matches the smooth tile-tween feel and hides the
- * seam when the player accelerates into movement. Classic GBA Pokémon used
- * per-frame scroll that effectively feels like lerp ≈ 0.2.  Snap-follow
- * can be enabled for Session 2 if preferred — just pass (true, true, 1, 1).
+ * CONFIRM KEY: Z / Enter / Space (edge-triggered via InputController).
+ * See InputController.getConfirmJustPressed() for details.
+ *
+ * NPC INTERACTION:
+ *   Player must be facing the NPC's tile (adjacent, correct direction).
+ *   Pressing confirm triggers dialogue.  While dialogue is active all
+ *   movement input is suppressed.
  */
 export class OverworldScene extends Phaser.Scene {
   private player!: Player;
   private inputCtrl!: InputController;
+  private dialogueBox!: DialogueBox;
+  private npcs: NPC[] = [];
+  private dialogueMap = new Map<string, DialogueSequence>();
 
   constructor() {
     super({ key: "OverworldScene" });
@@ -36,8 +45,11 @@ export class OverworldScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   create(): void {
+    this.loadDialogueData();
     const map = this.createTilemap();
     this.createPlayer(map);
+    this.createNpcs(map);
+    this.createDialogueBox();
     this.setupCamera(map);
   }
 
@@ -45,14 +57,49 @@ export class OverworldScene extends Phaser.Scene {
   // update
   // ---------------------------------------------------------------------------
 
-  update(): void {
+  update(_time: number, delta: number): void {
+    // Always tick the dialogue box (typewriter reveal + blink)
+    this.dialogueBox.update(delta);
+
+    const confirm = this.inputCtrl.getConfirmJustPressed();
+
+    if (this.dialogueBox.isActive()) {
+      // While dialogue is open: confirm advances, movement suppressed
+      if (confirm) {
+        this.dialogueBox.advance();
+      }
+      return; // DO NOT pass movement to player
+    }
+
+    // No dialogue active — handle movement normally
     const direction = this.inputCtrl.getDirection();
     this.player.handleInput(direction);
+
+    // Check for NPC interaction on confirm press
+    if (confirm) {
+      this.tryInteractNpc();
+    }
   }
 
   // ---------------------------------------------------------------------------
   // Private helpers
   // ---------------------------------------------------------------------------
+
+  /**
+   * Load dialogue sequences from the JSON file cached in BootScene.
+   * Stores them in a Map<id, DialogueSequence> for O(1) lookup.
+   */
+  private loadDialogueData(): void {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const raw: unknown = this.cache.json.get("dialogue-npcs");
+    if (!Array.isArray(raw)) {
+      console.warn("OverworldScene: dialogue-npcs JSON not found in cache.");
+      return;
+    }
+    for (const entry of raw as DialogueSequence[]) {
+      this.dialogueMap.set(entry.id, entry);
+    }
+  }
 
   /**
    * Builds the tilemap, creates layers, and sets up collision.
@@ -63,7 +110,6 @@ export class OverworldScene extends Phaser.Scene {
 
     // "tiles" is the Phaser texture key created in BootScene.
     // The first arg must match the tileset name declared inside test_map.tmj.
-    // No margin/spacing because we're using a plain (non-extruded) generated texture.
     const tileset = map.addTilesetImage("placeholder_tiles", "tiles");
     if (!tileset) {
       throw new Error(
@@ -76,21 +122,17 @@ export class OverworldScene extends Phaser.Scene {
     if (!groundLayer) throw new Error("OverworldScene: Ground layer missing.");
 
     // Collision layer — tiles here block the player.
-    // Uses setCollisionByExclusion so every tile present in this layer is solid.
     const collisionLayer = map.createLayer("Collision", tileset, 0, 0);
     if (!collisionLayer)
       throw new Error("OverworldScene: Collision layer missing.");
 
     // Make all non-empty tiles in the Collision layer solid.
-    // -1 is Phaser's sentinel for "empty cell".
     collisionLayer.setCollisionByExclusion([-1]);
 
-    // Keep collision layer visible (slightly transparent) in dev mode.
-    // Comment this line out for production / when using real art.
+    // Semi-transparent collision layer for dev visibility.
     collisionLayer.setAlpha(0.35);
 
-    // Set physics world bounds to map pixel dimensions so the player
-    // cannot walk into the void beyond the map edge.
+    // Set physics world bounds to map pixel dimensions.
     this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
     return map;
@@ -101,8 +143,6 @@ export class OverworldScene extends Phaser.Scene {
    * creates the InputController.
    */
   private createPlayer(map: Phaser.Tilemaps.Tilemap): void {
-    // Find the spawn point from the Tiled "Objects" layer.
-    // Falls back to tile (3, 3) if no spawn object is defined.
     let spawnTileX = 3;
     let spawnTileY = 3;
 
@@ -112,7 +152,6 @@ export class OverworldScene extends Phaser.Scene {
         (obj) => obj.name === "PlayerSpawn"
       );
       if (spawnObj && spawnObj.x !== undefined && spawnObj.y !== undefined) {
-        // Tiled object coordinates are pixel-based, convert to tile coords.
         spawnTileX = Math.floor(spawnObj.x / (map.tileWidth ?? 16));
         spawnTileY = Math.floor(spawnObj.y / (map.tileHeight ?? 16));
       }
@@ -121,12 +160,9 @@ export class OverworldScene extends Phaser.Scene {
     this.player = new Player(this, spawnTileX, spawnTileY);
     this.player.setMapBounds(map.widthInPixels, map.heightInPixels);
 
-    // Wire collision layer reference for pre-move tile checks in Player.ts
     const collisionLayer = map.getLayer("Collision")?.tilemapLayer;
     if (collisionLayer) {
       this.player.setCollisionLayer(collisionLayer);
-
-      // Arcade collider as a fallback safety net (physics body vs layer)
       this.physics.add.collider(this.player, collisionLayer);
     }
 
@@ -134,16 +170,114 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   /**
+   * Reads NPC objects from the Tiled "NPCs" object layer and creates NPC
+   * entities with distinct tints.
+   *
+   * Tiled object custom property: dialogueId (string)
+   * Coordinates in Tiled are pixel-based; we convert to tile coords.
+   */
+  private createNpcs(map: Phaser.Tilemaps.Tilemap): void {
+    const npcLayer = map.getObjectLayer("NPCs");
+    if (!npcLayer) {
+      console.warn('OverworldScene: No "NPCs" object layer found in map.');
+      return;
+    }
+
+    // Distinct tints for each NPC so they're visually identifiable
+    const tints = [0x44ccff, 0xff8844, 0x88ff44];
+    let tintIndex = 0;
+
+    for (const obj of npcLayer.objects) {
+      if (obj.x === undefined || obj.y === undefined) continue;
+
+      // Tiled places object origin at the bottom-left of the tile for point objects
+      const tileX = Math.floor(obj.x / (map.tileWidth ?? 16));
+      const tileY = Math.floor(obj.y / (map.tileHeight ?? 16));
+
+      // Read the dialogueId custom property
+      const dialogueId = this.getTiledProperty<string>(obj, "dialogueId");
+      if (!dialogueId) {
+        console.warn(`OverworldScene: NPC "${obj.name}" has no dialogueId property.`);
+        continue;
+      }
+
+      const tint = tints[tintIndex % tints.length] ?? 0xffffff;
+      tintIndex++;
+
+      const npc = new NPC(this, tileX, tileY, dialogueId, tint);
+      this.npcs.push(npc);
+    }
+  }
+
+  /**
+   * Creates the DialogueBox UI (screen-fixed, depth 20).
+   * The box starts hidden; show() is called when an NPC is interacted with.
+   */
+  private createDialogueBox(): void {
+    this.dialogueBox = new DialogueBox(this);
+  }
+
+  /**
    * Configures the main camera to follow the player within map bounds.
    */
   private setupCamera(map: Phaser.Tilemaps.Tilemap): void {
     const cam = this.cameras.main;
-
-    // Lock camera to map dimensions — never show the void outside the map.
     cam.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
-
-    // Smooth lerp-follow.  lerpX/Y = 0.08 gives a nice GBA-style tracking feel.
-    // The second argument (roundPixels) is set to true to avoid sub-pixel jitter.
     cam.startFollow(this.player, true, 0.08, 0.08);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Interaction
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Checks if the player is facing an NPC at the adjacent tile and, if so,
+   * triggers dialogue.
+   *
+   * Rules (classic Pokémon style):
+   *   - Player must be facing an adjacent tile (distance = 1 tile in that direction)
+   *   - The NPC must occupy exactly that tile
+   *   - If multiple NPCs somehow share a tile, only the first is triggered
+   */
+  private tryInteractNpc(): void {
+    const facing = this.player.getFacing();
+    const playerTileX = Math.round((this.player.x - TILE_SIZE / 2) / TILE_SIZE);
+    const playerTileY = Math.round((this.player.y - TILE_SIZE / 2) / TILE_SIZE);
+
+    const targetTileX = playerTileX + (facing === "left" ? -1 : facing === "right" ? 1 : 0);
+    const targetTileY = playerTileY + (facing === "up" ? -1 : facing === "down" ? 1 : 0);
+
+    const npc = this.npcs.find(
+      (n) => n.tileX === targetTileX && n.tileY === targetTileY
+    );
+
+    if (!npc) return; // No NPC in front — silent no-op
+
+    const sequence = npc.getDialogue(this.dialogueMap);
+    if (!sequence) {
+      console.warn(`OverworldScene: No dialogue found for id "${npc.dialogueId}".`);
+      return;
+    }
+
+    this.dialogueBox.show(sequence);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Utilities
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Reads a Tiled object's custom property by name.
+   * Returns undefined if the property doesn't exist.
+   */
+  private getTiledProperty<T>(
+    obj: Phaser.Types.Tilemaps.TiledObject,
+    name: string
+  ): T | undefined {
+    if (!obj.properties) return undefined;
+    const prop = (obj.properties as Array<{ name: string; value: unknown }>).find(
+      (p) => p.name === name
+    );
+    return prop?.value as T | undefined;
   }
 }

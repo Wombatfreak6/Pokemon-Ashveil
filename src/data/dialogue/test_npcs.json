@@ -1,0 +1,41 @@
+[
+  {
+    "id": "npc_greeter",
+    "lines": [
+      {
+        "speaker": "Villager",
+        "text": "Hello, traveler! Welcome to this humble test map."
+      }
+    ]
+  },
+  {
+    "id": "npc_storyteller",
+    "lines": [
+      {
+        "speaker": "Elder",
+        "text": "Have you seen the old lighthouse to the north?"
+      },
+      {
+        "speaker": "Elder",
+        "text": "They say its light has not shone in many years... not since the cartridge was lost."
+      },
+      {
+        "speaker": "Elder",
+        "text": "Some folk still believe it will shine again one day."
+      },
+      {
+        "speaker": "Elder",
+        "text": "But that is just an old man's hope. Safe travels to you."
+      }
+    ]
+  },
+  {
+    "id": "npc_wanderer",
+    "lines": [
+      {
+        "speaker": "Wanderer",
+        "text": "Funny thing about this town — the roads all seem to lead back to the same square no matter which direction you walk. I have been circling for three days now and the fountain never moves. Perhaps the map itself is haunted. Or perhaps I am simply very bad at navigating. Either way, I hope your journey goes better than mine has."
+      }
+    ]
+  }
+]

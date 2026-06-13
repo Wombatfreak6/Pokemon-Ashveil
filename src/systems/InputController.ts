@@ -10,10 +10,19 @@ export type Direction = "up" | "down" | "left" | "right";
  * any game-state so it can be reused for menu navigation, cutscene skip,
  * etc. in future sessions.
  *
+ * CONFIRM KEY
+ * ===========
+ * Mapped to the Z key (classic GBA A-button mapping in fan emulators).
+ * Also accepts Enter and Space for accessibility.
+ * getConfirmJustPressed() is EDGE-TRIGGERED — returns true only on the
+ * frame the key transitions from up→down.  This prevents rapid-fire
+ * skipping through multiple dialogue lines on a held key.
+ *
  * Usage:
  *   const input = new InputController(scene);
  *   // in update():
- *   const dir = input.getDirection(); // 'up' | 'down' | 'left' | 'right' | null
+ *   const dir = input.getDirection();
+ *   const confirm = input.getConfirmJustPressed();
  */
 export class InputController {
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -23,6 +32,12 @@ export class InputController {
     left: Phaser.Input.Keyboard.Key;
     right: Phaser.Input.Keyboard.Key;
   };
+
+  /**
+   * Confirm key: Z (GBA A-button), Enter, or Space.
+   * All three map to the same action.
+   */
+  private confirmKeys: Phaser.Input.Keyboard.Key[];
 
   constructor(scene: Phaser.Scene) {
     if (!scene.input.keyboard) {
@@ -37,6 +52,12 @@ export class InputController {
       left: scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
       right: scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D),
     };
+
+    this.confirmKeys = [
+      scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z),
+      scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER),
+      scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE),
+    ];
   }
 
   /**
@@ -57,5 +78,20 @@ export class InputController {
    */
   isAnyDirectionDown(): boolean {
     return this.getDirection() !== null;
+  }
+
+  /**
+   * Returns true on the SINGLE FRAME when a confirm key (Z / Enter / Space)
+   * transitions from released → pressed.
+   *
+   * Edge-triggered: will NOT return true on subsequent frames while the key
+   * is held.  This prevents rapid-fire dialogue skipping.
+   *
+   * Mapped to: Z (primary, GBA A-button), Enter, Space (accessibility).
+   */
+  getConfirmJustPressed(): boolean {
+    return this.confirmKeys.some((key) =>
+      Phaser.Input.Keyboard.JustDown(key)
+    );
   }
 }

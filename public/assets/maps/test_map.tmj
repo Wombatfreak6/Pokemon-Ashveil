@@ -52,12 +52,12 @@
             2,0,0,0,0,2,2,2,2,0,0,0,0,0,0,0,0,0,0,2,
             2,0,0,0,0,2,0,0,2,0,0,0,0,0,0,0,0,0,0,2,
             2,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,2,
-            2,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,2,
+            2,0,0,0,0,0,0,0,2,2,0,0,0,0,0,0,0,0,0,2,
             2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,
-            2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,
+            2,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,2,
             2,0,0,0,0,0,0,0,0,0,0,0,2,2,2,0,0,0,0,2,
             2,0,0,0,0,0,0,0,0,0,0,0,2,0,2,0,0,0,0,2,
-            2,0,0,0,0,0,0,0,0,0,0,0,2,2,2,0,0,0,0,2,
+            2,0,0,0,2,0,0,0,0,0,0,0,2,2,2,0,0,0,0,2,
             2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,
             2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,
             2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,
@@ -98,9 +98,74 @@
          "visible":true,
          "x":0,
          "y":0
+        },
+        {
+         "draworder":"topdown",
+         "id":4,
+         "name":"NPCs",
+         "objects":[
+                {
+                 "height":0,
+                 "id":2,
+                 "name":"npc_greeter",
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":144,
+                 "y":112,
+                 "properties":[
+                        {
+                         "name":"dialogueId",
+                         "type":"string",
+                         "value":"npc_greeter"
+                        }]
+                },
+                {
+                 "height":0,
+                 "id":3,
+                 "name":"npc_storyteller",
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":224,
+                 "y":144,
+                 "properties":[
+                        {
+                         "name":"dialogueId",
+                         "type":"string",
+                         "value":"npc_storyteller"
+                        }]
+                },
+                {
+                 "height":0,
+                 "id":4,
+                 "name":"npc_wanderer",
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":64,
+                 "y":192,
+                 "properties":[
+                        {
+                         "name":"dialogueId",
+                         "type":"string",
+                         "value":"npc_wanderer"
+                        }]
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
         }],
- "nextlayerid":4,
- "nextobjectid":2,
+ "nextlayerid":5,
+ "nextobjectid":5,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.10.0",
