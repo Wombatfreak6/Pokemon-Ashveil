@@ -63,6 +63,8 @@ export class DialogueBox {
   private active = false;
   private sequence: DialogueSequence | null = null;
   private lineIndex = 0;
+  private pages: string[] = [];
+  private pageIndex = 0;
 
   /** Revealed character count (float, accumulates fractional chars per frame) */
   private revealCount = 0;
@@ -78,16 +80,32 @@ export class DialogueBox {
   constructor(scene: Phaser.Scene) {
     const depth = 20; // above everything else
 
+    const bgX = Math.round(0);
+    const bgY = Math.round(BOX_Y);
+    const bgW = Math.round(SCREEN_W);
+    const bgH = Math.round(BOX_H);
+
+    const speakX = Math.round(BOX_PADDING);
+    const speakY = Math.round(SPEAKER_Y);
+
+    const bodyX = Math.round(BOX_PADDING);
+    const bodyY = Math.round(TEXT_Y);
+
+    const indX = Math.round(SCREEN_W - BOX_PADDING - 6);
+    const indY = Math.round(SCREEN_H - BOX_PADDING - 2);
+
+    const resolutionVal = window.devicePixelRatio || 1;
+
     // ── Background ─────────────────────────────────────────────────────────────
     this.background = scene.add
-      .rectangle(0, BOX_Y, SCREEN_W, BOX_H, 0x0a0a1e, 0.9)
+      .rectangle(bgX, bgY, bgW, bgH, 0x0a0a1e, 0.9)
       .setOrigin(0, 0)
       .setScrollFactor(0)
       .setDepth(depth);
 
     // ── Border ─────────────────────────────────────────────────────────────────
     this.border = scene.add
-      .rectangle(0, BOX_Y, SCREEN_W, BOX_H, 0x4466aa, 0)
+      .rectangle(bgX, bgY, bgW, bgH, 0x4466aa, 0)
       .setOrigin(0, 0)
       .setScrollFactor(0)
       .setDepth(depth)
@@ -95,22 +113,22 @@ export class DialogueBox {
 
     // ── Speaker name ───────────────────────────────────────────────────────────
     this.speakerText = scene.add
-      .text(BOX_PADDING, SPEAKER_Y, "", {
-        fontFamily: "monospace",
-        fontSize: "7px",
+      .text(speakX, speakY, "", {
+        fontFamily: '"Courier New", Courier, monospace',
+        fontSize: "8px",
         color: "#ffdd66",
-        resolution: 1,
+        resolution: resolutionVal,
       })
       .setScrollFactor(0)
       .setDepth(depth + 1);
 
     // ── Body text ──────────────────────────────────────────────────────────────
     this.bodyText = scene.add
-      .text(BOX_PADDING, TEXT_Y, "", {
-        fontFamily: "monospace",
-        fontSize: "7px",
+      .text(bodyX, bodyY, "", {
+        fontFamily: '"Courier New", Courier, monospace',
+        fontSize: "8px",
         color: "#e8e8f0",
-        resolution: 1,
+        resolution: resolutionVal,
         wordWrap: { width: WRAP_WIDTH, useAdvancedWrap: true },
         lineSpacing: 2,
       })
@@ -120,11 +138,11 @@ export class DialogueBox {
     // ── Continue indicator ─────────────────────────────────────────────────────
     // A small blinking "▼" in the bottom-right corner of the box
     this.continueIndicator = scene.add
-      .text(SCREEN_W - BOX_PADDING - 6, SCREEN_H - BOX_PADDING - 2, "▼", {
-        fontFamily: "monospace",
-        fontSize: "6px",
+      .text(indX, indY, "▼", {
+        fontFamily: '"Courier New", Courier, monospace',
+        fontSize: "8px",
         color: "#aabbdd",
-        resolution: 1,
+        resolution: resolutionVal,
       })
       .setOrigin(1, 1)
       .setScrollFactor(0)
@@ -167,10 +185,17 @@ export class DialogueBox {
       return;
     }
 
+    // Check if there are more pages in the current line
+    const nextPageIndex = this.pageIndex + 1;
+    if (nextPageIndex < this.pages.length) {
+      this.showPage(nextPageIndex);
+      return;
+    }
+
     // Move to next line
-    const nextIndex = this.lineIndex + 1;
-    if (nextIndex < this.sequence.lines.length) {
-      this.showLine(nextIndex);
+    const nextLineIndex = this.lineIndex + 1;
+    if (nextLineIndex < this.sequence.lines.length) {
+      this.showLine(nextLineIndex);
     } else {
       this.hide();
     }
@@ -234,8 +259,28 @@ export class DialogueBox {
     // Speaker name (empty string hides it)
     this.speakerText.setText(line.speaker ?? "");
 
+    // Pre-process current line into pages (maximum 2 lines per page)
+    const rawText = line.text;
+    const wrapped = this.bodyText.runWordWrap(rawText);
+    const lines = wrapped.split("\n");
+
+    this.pages = [];
+    for (let i = 0; i < lines.length; i += 2) {
+      const pageLines = lines.slice(i, i + 2);
+      this.pages.push(pageLines.join("\n"));
+    }
+    if (this.pages.length === 0) {
+      this.pages.push("");
+    }
+
+    this.showPage(0);
+  }
+
+  private showPage(index: number): void {
+    this.pageIndex = index;
+    this.fullText = this.pages[index];
+
     // Reset typewriter state
-    this.fullText = line.text;
     this.revealCount = 0;
     this.lineComplete = false;
     this.bodyText.setText("");

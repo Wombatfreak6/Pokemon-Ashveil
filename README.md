@@ -191,7 +191,7 @@ a Vite build system — no code from the original repository is used.
 | Session | Date | Status | Summary |
 |---------|------|--------|---------|
 | Session 1 | 2026-06-13 | ✅ Complete | Foundation: Vite+TS+Phaser 3, tilemap, grid movement, collision, camera |
-| Session 2 | 2026-06-14 | ✅ Complete | Dialogue & NPCs: GBA text box, Tiled object mapping, confirm interact, input buffering |
+| Session 2 | 2026-06-14 | ✅ Complete | Dialogue & NPCs: GBA text box, Tiled object mapping, confirm interact, input buffering. Patch: fixed dialogue text overflow (2-line pagination) and blurry text rendering (DPI, rounding, Courier New stack). |
 
 ---
 

@@ -223,6 +223,7 @@ export class OverworldScene extends Phaser.Scene {
   private setupCamera(map: Phaser.Tilemaps.Tilemap): void {
     const cam = this.cameras.main;
     cam.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+    cam.setRoundPixels(true);
     cam.startFollow(this.player, true, 0.08, 0.08);
   }
 
