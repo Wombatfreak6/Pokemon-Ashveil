@@ -45,8 +45,6 @@ const SCREEN_H = 160;
 const BOX_H = 52;
 const BOX_Y = SCREEN_H - BOX_H; // 108
 const BOX_PADDING = 6;
-const TEXT_Y = BOX_Y + BOX_PADDING + 10; // +10 for speaker line
-const SPEAKER_Y = BOX_Y + BOX_PADDING;
 
 /** Wrap width in pixels (box width minus left/right padding) */
 const WRAP_WIDTH = SCREEN_W - BOX_PADDING * 2;
@@ -86,15 +84,13 @@ export class DialogueBox {
     const bgH = Math.round(BOX_H);
 
     const speakX = Math.round(BOX_PADDING);
-    const speakY = Math.round(SPEAKER_Y);
+    const speakY = Math.round(BOX_Y + 2);
 
     const bodyX = Math.round(BOX_PADDING);
-    const bodyY = Math.round(TEXT_Y);
+    const bodyY = Math.round(BOX_Y + 16);
 
-    const indX = Math.round(SCREEN_W - BOX_PADDING - 6);
-    const indY = Math.round(SCREEN_H - BOX_PADDING - 2);
-
-    const resolutionVal = window.devicePixelRatio || 1;
+    const indX = Math.round(SCREEN_W - BOX_PADDING - 12);
+    const indY = Math.round(SCREEN_H - 4);
 
     // ── Background ─────────────────────────────────────────────────────────────
     this.background = scene.add
@@ -114,10 +110,9 @@ export class DialogueBox {
     // ── Speaker name ───────────────────────────────────────────────────────────
     this.speakerText = scene.add
       .text(speakX, speakY, "", {
-        fontFamily: '"Courier New", Courier, monospace',
-        fontSize: "8px",
+        fontFamily: "monospace",
+        fontSize: "10px",
         color: "#ffdd66",
-        resolution: resolutionVal,
       })
       .setScrollFactor(0)
       .setDepth(depth + 1);
@@ -125,12 +120,11 @@ export class DialogueBox {
     // ── Body text ──────────────────────────────────────────────────────────────
     this.bodyText = scene.add
       .text(bodyX, bodyY, "", {
-        fontFamily: '"Courier New", Courier, monospace',
-        fontSize: "8px",
+        fontFamily: "monospace",
+        fontSize: "10px",
         color: "#e8e8f0",
-        resolution: resolutionVal,
         wordWrap: { width: WRAP_WIDTH, useAdvancedWrap: true },
-        lineSpacing: 2,
+        lineSpacing: 1,
       })
       .setScrollFactor(0)
       .setDepth(depth + 1);
@@ -139,10 +133,9 @@ export class DialogueBox {
     // A small blinking "▼" in the bottom-right corner of the box
     this.continueIndicator = scene.add
       .text(indX, indY, "▼", {
-        fontFamily: '"Courier New", Courier, monospace',
-        fontSize: "8px",
+        fontFamily: "monospace",
+        fontSize: "16px",
         color: "#aabbdd",
-        resolution: resolutionVal,
       })
       .setOrigin(1, 1)
       .setScrollFactor(0)
