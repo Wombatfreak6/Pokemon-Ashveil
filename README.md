@@ -210,5 +210,3 @@ a Vite build system — no code from the original repository is used.
 
 Fan game — all Pokémon IP belongs to Nintendo / Game Freak / Creatures Inc.  
 This project is non-commercial and for educational/personal use only.
-# Pokemon-Ashveil
-# Pokemon-Ashveil
