@@ -192,6 +192,7 @@ a Vite build system — no code from the original repository is used.
 |---------|------|--------|---------|
 | Session 1 | 2026-06-13 | ✅ Complete | Foundation: Vite+TS+Phaser 3, tilemap, grid movement, collision, camera |
 | Session 2 | 2026-06-14 | ✅ Complete | Dialogue & NPCs: GBA text box, Tiled object mapping, confirm interact, input buffering. Patch: fixed dialogue text overflow (2-line pagination) and blurry text rendering (by removing custom resolution overrides, setting native font size to exactly 16px, reverting to monospace, and rounding coordinates). |
+| Session 3 | 2026-06-14 | ✅ Complete | Turn-based battle system (Phase 1): state-driven battle engine, Gen 1/2 formulas, type matchups, menu navigation, and procedural battle sprites. Patch: Added `recoil` field to Move interface to support Flare Blitz, and confirmed `X` key as Cancel/B-button control. |
 
 ---
 

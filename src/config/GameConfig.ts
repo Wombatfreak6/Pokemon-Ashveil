@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { BootScene } from "@scenes/BootScene";
 import { OverworldScene } from "@scenes/OverworldScene";
+import { BattleScene } from "@scenes/BattleScene";
 
 /**
  * GBA-authentic Phaser game configuration.
@@ -36,5 +37,5 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
     },
   },
 
-  scene: [BootScene, OverworldScene],
+  scene: [BootScene, OverworldScene, BattleScene],
 };

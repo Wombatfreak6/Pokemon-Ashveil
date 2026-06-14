@@ -1,0 +1,167 @@
+[
+  {
+    "id": 1,
+    "name": "Mudkip",
+    "types": ["Water"],
+    "baseStats": {
+      "hp": 50,
+      "atk": 70,
+      "def": 50,
+      "spAtk": 50,
+      "spDef": 50,
+      "speed": 40
+    },
+    "learnset": [
+      { "level": 1, "moveId": "tackle" },
+      { "level": 1, "moveId": "growl" },
+      { "level": 5, "moveId": "water-gun" },
+      { "level": 15, "moveId": "bite" }
+    ],
+    "baseExp": 62,
+    "evolvesTo": "Marshtomp",
+    "evolvesAtLevel": 16
+  },
+  {
+    "id": 2,
+    "name": "Torchic",
+    "types": ["Fire"],
+    "baseStats": {
+      "hp": 45,
+      "atk": 60,
+      "def": 40,
+      "spAtk": 70,
+      "spDef": 50,
+      "speed": 45
+    },
+    "learnset": [
+      { "level": 1, "moveId": "scratch" },
+      { "level": 1, "moveId": "growl" },
+      { "level": 5, "moveId": "ember" },
+      { "level": 16, "moveId": "quick-attack" }
+    ],
+    "baseExp": 62,
+    "evolvesTo": "Combusken",
+    "evolvesAtLevel": 16
+  },
+  {
+    "id": 3,
+    "name": "Treecko",
+    "types": ["Grass"],
+    "baseStats": {
+      "hp": 40,
+      "atk": 45,
+      "def": 35,
+      "spAtk": 65,
+      "spDef": 55,
+      "speed": 70
+    },
+    "learnset": [
+      { "level": 1, "moveId": "tackle" },
+      { "level": 1, "moveId": "growl" },
+      { "level": 6, "moveId": "absorb" },
+      { "level": 16, "moveId": "quick-attack" }
+    ],
+    "baseExp": 62,
+    "evolvesTo": "Grovyle",
+    "evolvesAtLevel": 16
+  },
+  {
+    "id": 4,
+    "name": "Pidgey",
+    "types": ["Normal", "Flying"],
+    "baseStats": {
+      "hp": 40,
+      "atk": 45,
+      "def": 40,
+      "spAtk": 35,
+      "spDef": 35,
+      "speed": 56
+    },
+    "learnset": [
+      { "level": 1, "moveId": "tackle" },
+      { "level": 5, "moveId": "gust" },
+      { "level": 13, "moveId": "quick-attack" }
+    ],
+    "baseExp": 50
+  },
+  {
+    "id": 5,
+    "name": "Rattata",
+    "types": ["Normal"],
+    "baseStats": {
+      "hp": 30,
+      "atk": 56,
+      "def": 35,
+      "spAtk": 25,
+      "spDef": 35,
+      "speed": 72
+    },
+    "learnset": [
+      { "level": 1, "moveId": "tackle" },
+      { "level": 4, "moveId": "quick-attack" },
+      { "level": 9, "moveId": "bite" }
+    ],
+    "baseExp": 51
+  },
+  {
+    "id": 6,
+    "name": "Growlithe",
+    "types": ["Fire"],
+    "baseStats": {
+      "hp": 55,
+      "atk": 70,
+      "def": 45,
+      "spAtk": 70,
+      "spDef": 50,
+      "speed": 60
+    },
+    "learnset": [
+      { "level": 1, "moveId": "tackle" },
+      { "level": 1, "moveId": "growl" },
+      { "level": 6, "moveId": "ember" },
+      { "level": 18, "moveId": "flamethrower" }
+    ],
+    "baseExp": 70
+  },
+  {
+    "id": 7,
+    "name": "Magmar",
+    "types": ["Fire"],
+    "baseStats": {
+      "hp": 65,
+      "atk": 95,
+      "def": 57,
+      "spAtk": 100,
+      "spDef": 85,
+      "speed": 93
+    },
+    "learnset": [
+      { "level": 1, "moveId": "tackle" },
+      { "level": 1, "moveId": "growl" },
+      { "level": 7, "moveId": "ember" },
+      { "level": 13, "moveId": "flamethrower" },
+      { "level": 19, "moveId": "fire-blast" }
+    ],
+    "baseExp": 173
+  },
+  {
+    "id": 8,
+    "name": "Arcanine",
+    "types": ["Fire"],
+    "baseStats": {
+      "hp": 90,
+      "atk": 110,
+      "def": 80,
+      "spAtk": 100,
+      "spDef": 80,
+      "speed": 95
+    },
+    "learnset": [
+      { "level": 1, "moveId": "flare-blitz" },
+      { "level": 1, "moveId": "bite" },
+      { "level": 1, "moveId": "tackle" },
+      { "level": 1, "moveId": "flamethrower" }
+    ],
+    "baseExp": 194
+  }
+]

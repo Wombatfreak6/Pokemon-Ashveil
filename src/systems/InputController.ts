@@ -39,6 +39,11 @@ export class InputController {
    */
   private confirmKeys: Phaser.Input.Keyboard.Key[];
 
+  /**
+   * Cancel key: X (GBA B-button).
+   */
+  private cancelKeys: Phaser.Input.Keyboard.Key[];
+
   constructor(scene: Phaser.Scene) {
     if (!scene.input.keyboard) {
       throw new Error("InputController: keyboard plugin is not available.");
@@ -57,6 +62,10 @@ export class InputController {
       scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z),
       scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER),
       scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE),
+    ];
+
+    this.cancelKeys = [
+      scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X),
     ];
   }
 
@@ -91,6 +100,21 @@ export class InputController {
    */
   getConfirmJustPressed(): boolean {
     return this.confirmKeys.some((key) =>
+      Phaser.Input.Keyboard.JustDown(key)
+    );
+  }
+
+  /**
+   * Returns true on the SINGLE FRAME when a cancel key (X)
+   * transitions from released → pressed.
+   *
+   * Edge-triggered: will NOT return true on subsequent frames while the key
+   * is held.
+   *
+   * Mapped to: X (GBA B-button).
+   */
+  getCancelJustPressed(): boolean {
+    return this.cancelKeys.some((key) =>
       Phaser.Input.Keyboard.JustDown(key)
     );
   }

@@ -1,0 +1,50 @@
+[
+  {
+    "id": "garnet",
+    "name": "Garnet",
+    "isGymLeader": true,
+    "badge": "Ember Badge",
+    "party": [
+      {
+        "speciesId": 7,
+        "level": 14,
+        "moves": ["ember", "tackle", "growl", "flamethrower"]
+      },
+      {
+        "speciesId": 8,
+        "level": 16,
+        "moves": ["flare-blitz", "bite", "tackle", "flamethrower"]
+      }
+    ],
+    "defeatDialogue": "You've got fire in you, kid. Your mother would be proud.",
+    "winDialogue": "The Ember Badge isn't earned easily. Come back stronger."
+  },
+  {
+    "id": "route_trainer_1",
+    "name": "Route Trainer Joey",
+    "isGymLeader": false,
+    "party": [
+      {
+        "speciesId": 5,
+        "level": 8,
+        "moves": ["tackle", "quick-attack"]
+      }
+    ],
+    "defeatDialogue": "My Rattata is in the top percentage of Rattata!",
+    "winDialogue": "Told you my Rattata was special!"
+  },
+  {
+    "id": "route_trainer_2",
+    "name": "Route Trainer Robin",
+    "isGymLeader": false,
+    "party": [
+      {
+        "speciesId": 4,
+        "level": 9,
+        "moves": ["tackle", "gust"]
+      }
+    ],
+    "defeatDialogue": "Birds of a feather...",
+    "winDialogue": "My Pidgey flies circles around you!"
+  }
+]

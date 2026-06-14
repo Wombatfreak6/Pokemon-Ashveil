@@ -42,6 +42,12 @@ export class BootScene extends Phaser.Scene {
     // stores it under the key 'dialogue-npcs' and it is retrieved in
     // OverworldScene via this.cache.json.get('dialogue-npcs').
     this.load.json("dialogue-npcs", "assets/data/dialogue/test_npcs.json");
+
+    // Load battle data files
+    this.load.json("pokemon-data", "assets/data/pokemon.json");
+    this.load.json("moves-data", "assets/data/moves.json");
+    this.load.json("type-chart", "assets/data/typeChart.json");
+    this.load.json("trainers-data", "assets/data/trainers.json");
   }
 
   create(): void {
@@ -49,6 +55,7 @@ export class BootScene extends Phaser.Scene {
     this.createTilesetTexture();
     this.createPlayerTexture();
     this.createNpcTexture();
+    this.createBattleSprites();
 
     this.scene.start("OverworldScene");
   }
@@ -399,5 +406,54 @@ export class BootScene extends Phaser.Scene {
     c.globalAlpha = 1;
 
     tex.refresh();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Procedural battle sprites
+  // ---------------------------------------------------------------------------
+
+  private createBattleSprites(): void {
+    const speciesColors: Record<number, { name: string; color: string }> = {
+      1: { name: "mudkip", color: "#3a8cd8" },
+      2: { name: "torchic", color: "#f87820" },
+      3: { name: "treecko", color: "#38b858" },
+      4: { name: "pidgey", color: "#a88058" },
+      5: { name: "rattata", color: "#9060b0" },
+      6: { name: "growlithe", color: "#f06800" },
+      7: { name: "magmar", color: "#e03000" },
+      8: { name: "arcanine", color: "#f07820" }
+    };
+
+    for (const [idStr, data] of Object.entries(speciesColors)) {
+      const id = parseInt(idStr);
+
+      // Front sprite: 32x32 colored rectangle with eyes facing left
+      const frontKey = `pokemon_${id}_front`;
+      if (this.textures.exists(frontKey)) this.textures.remove(frontKey);
+      const frontTex = this.textures.createCanvas(frontKey, 32, 32);
+      if (frontTex) {
+        const c = frontTex.context;
+        c.fillStyle = data.color;
+        c.fillRect(4, 4, 24, 24);
+        c.fillStyle = "#1a1a2e"; // eyes
+        c.fillRect(8, 8, 2, 4);
+        c.fillStyle = "#ffffff";
+        c.fillRect(8, 8, 1, 2);
+        frontTex.refresh();
+      }
+
+      // Back sprite: 32x32 colored rectangle facing right-up
+      const backKey = `pokemon_${id}_back`;
+      if (this.textures.exists(backKey)) this.textures.remove(backKey);
+      const backTex = this.textures.createCanvas(backKey, 32, 32);
+      if (backTex) {
+        const c = backTex.context;
+        c.fillStyle = data.color;
+        c.fillRect(4, 4, 24, 24);
+        c.fillStyle = "rgba(0,0,0,0.15)"; // back head shade
+        c.fillRect(4, 4, 24, 12);
+        backTex.refresh();
+      }
+    }
   }
 }

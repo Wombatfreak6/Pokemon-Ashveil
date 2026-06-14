@@ -4,6 +4,8 @@ import { NPC } from "@entities/NPC";
 import { InputController } from "@systems/InputController";
 import { DialogueBox } from "@systems/DialogueBox";
 import type { DialogueSequence } from "@systems/DialogueTypes";
+import { createBattlePokemon } from "@systems/BattleEngine";
+import type { PokemonSpecies, Move } from "@systems/BattleTypes";
 
 /**
  * OverworldScene — the main overworld / exploration scene.
@@ -51,6 +53,39 @@ export class OverworldScene extends Phaser.Scene {
     this.createNpcs(map);
     this.createDialogueBox();
     this.setupCamera(map);
+
+    // TEMP: remove in Session 4
+    if (this.input.keyboard) {
+      const bKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.B);
+      bKey.on("down", (event: KeyboardEvent) => {
+        if (this.dialogueBox.isActive()) return;
+
+        const pokemonJson = this.cache.json.get("pokemon-data") as PokemonSpecies[];
+        const movesJson = this.cache.json.get("moves-data") as Move[];
+
+        const mudkipSpecies = pokemonJson.find((s) => s.id === 1);
+        if (!mudkipSpecies) return;
+
+        const playerParty = [createBattlePokemon(mudkipSpecies, movesJson, 10)];
+
+        if (event.shiftKey) {
+          // Shift+B: trainer battle with Garnet
+          this.scene.start("BattleScene", {
+            isWildBattle: false,
+            trainerId: "garnet",
+            playerParty
+          });
+        } else {
+          // B: wild battle with Rattata Lv 8
+          this.scene.start("BattleScene", {
+            isWildBattle: true,
+            wildSpeciesId: 5, // Rattata
+            wildLevel: 8,
+            playerParty
+          });
+        }
+      });
+    }
   }
 
   // ---------------------------------------------------------------------------
