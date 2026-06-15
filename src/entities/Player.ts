@@ -34,9 +34,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private isMoving = false;
   private facing: Direction = "down";
   private bufferedDirection: Direction | null = null;
+  public onStepComplete?: (tileX: number, tileY: number) => void;
 
   // Reference to the collision tilemap layer — injected after construction.
   private collisionLayer: Phaser.Tilemaps.TilemapLayer | null = null;
+  private blockedTiles = new Set<string>();
 
   // World bounds (pixels) — set from the map dimensions.
   private mapWidth = 0;
@@ -74,6 +76,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   /**
+   * Set tiles blocked by dynamic entities like NPCs.
+   */
+  setBlockedTiles(tiles: Set<string>): void {
+    this.blockedTiles = tiles;
+  }
+
+  /**
    * Set the world/map bounds so the player cannot walk off the edge.
    * Values should be the map's pixel dimensions.
    */
@@ -87,6 +96,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
    */
   getFacing(): Direction {
     return this.facing;
+  }
+
+  setFacing(direction: Direction): void {
+    this.facing = direction;
+    this.anims.play(`idle-${direction}`, true);
   }
 
   /**
@@ -130,6 +144,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
+    // Guard: blocked by NPCs
+    const targetTileX = Math.round((targetX - TILE_SIZE / 2) / TILE_SIZE);
+    const targetTileY = Math.round((targetY - TILE_SIZE / 2) / TILE_SIZE);
+    if (this.blockedTiles.has(`${targetTileX},${targetTileY}`)) {
+      this.anims.play(`idle-${this.facing}`, true);
+      return;
+    }
+
     this.startMove(targetX, targetY);
   }
 
@@ -149,6 +171,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       ease: "Linear",
       onComplete: () => {
         this.isMoving = false;
+        if (this.onStepComplete) {
+          const tileX = Math.round((this.x - TILE_SIZE / 2) / TILE_SIZE);
+          const tileY = Math.round((this.y - TILE_SIZE / 2) / TILE_SIZE);
+          this.onStepComplete(tileX, tileY);
+        }
         if (this.bufferedDirection !== null) {
           const nextDir = this.bufferedDirection;
           this.bufferedDirection = null;

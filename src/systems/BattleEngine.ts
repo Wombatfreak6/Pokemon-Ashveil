@@ -59,7 +59,8 @@ export function createBattlePokemon(
     maxHp: stats.hp,
     stats,
     moves,
-    types: species.types
+    types: species.types,
+    exp: Math.pow(level, 3)
   };
 }
 

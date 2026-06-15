@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import { InputController } from "@systems/InputController";
 import { resolveTurn } from "@systems/BattleEngine";
+import { SceneTransition } from "@systems/SceneTransition";
+import { GameStateManager } from "@systems/GameStateManager";
 import type {
   BattlePokemon,
   BattleState,
@@ -88,7 +90,9 @@ export class BattleScene extends Phaser.Scene {
       // Trainer Battle
       const trainer = this.trainersData.find((t) => t.id === data.trainerId);
       if (!trainer) {
-        throw new Error(`BattleScene: Unknown trainer ID ${data.trainerId}`);
+        console.error(`BattleScene: Unknown trainer ID ${data.trainerId}`);
+        this.scene.start("OverworldScene", {});
+        return;
       }
       const trainerActive = trainer.party[0]; // first Pokémon
       const species = this.pokemonData.find((s) => s.id === trainerActive.speciesId);
@@ -130,6 +134,8 @@ export class BattleScene extends Phaser.Scene {
   }
 
   create(): void {
+    if (!this.battleState) return;
+    this.events.on("shutdown", this.shutdown, this);
     this.inputCtrl = new InputController(this);
 
     // Ensure camera rounds pixels
@@ -432,9 +438,68 @@ export class BattleScene extends Phaser.Scene {
 
     if (battleEnded && !this.isAnimatingEvent) {
       if (this.inputCtrl.getConfirmJustPressed() || this.inputCtrl.getCancelJustPressed()) {
-        this.scene.start("OverworldScene");
+        this.finishBattle();
       }
     }
+  }
+
+  private finishBattle(): void {
+    const gameState = GameStateManager.getInstance();
+    let whiteout = false;
+    let partyIndex = 0; // Assuming single player pokemon for now
+
+    if (this.battleState.phase === "victory") {
+      // Calculate EXP
+      const enemyBaseExp = this.pokemonData.find(s => s.id === this.battleState.enemyPokemon.speciesId)?.baseExp || 50;
+      const expGain = Math.floor((enemyBaseExp * this.battleState.enemyPokemon.level) / 7);
+      
+      const playerPkmn = this.battleState.playerPokemon;
+      playerPkmn.exp += expGain;
+
+      // Calculate Level Up Threshold (Level ^ 3)
+      let levelUpThreshold = Math.pow(playerPkmn.level + 1, 3);
+      let newLevel = playerPkmn.level;
+      
+      while (playerPkmn.exp >= levelUpThreshold && newLevel < 100) {
+        newLevel++;
+        levelUpThreshold = Math.pow(newLevel + 1, 3);
+      }
+
+      if (newLevel > playerPkmn.level) {
+        playerPkmn.level = newLevel;
+        // Recalculate stats
+        const species = this.pokemonData.find(s => s.id === playerPkmn.speciesId);
+        if (species) {
+          const hpDiff = playerPkmn.maxHp;
+          playerPkmn.maxHp = Math.floor(((2 * species.baseStats.hp + 31) * newLevel) / 100) + newLevel + 10;
+          playerPkmn.currentHp += (playerPkmn.maxHp - hpDiff); // Add diff to current hp
+          playerPkmn.stats = {
+            atk: Math.floor(((2 * species.baseStats.atk + 31) * newLevel) / 100) + 5,
+            def: Math.floor(((2 * species.baseStats.def + 31) * newLevel) / 100) + 5,
+            spAtk: Math.floor(((2 * species.baseStats.spAtk + 31) * newLevel) / 100) + 5,
+            spDef: Math.floor(((2 * species.baseStats.spDef + 31) * newLevel) / 100) + 5,
+            speed: Math.floor(((2 * species.baseStats.speed + 31) * newLevel) / 100) + 5
+          };
+        }
+      }
+
+      // Add trainer to defeated list
+      if (!this.battleState.isWildBattle && this.battleState.trainerId) {
+        gameState.addDefeatedTrainer(this.battleState.trainerId);
+      }
+      
+      gameState.updatePartyMember(partyIndex, playerPkmn);
+      gameState.save();
+    } else if (this.battleState.phase === "defeat") {
+      whiteout = true;
+      const playerPkmn = this.battleState.playerPokemon;
+      playerPkmn.currentHp = 1;
+      gameState.updatePartyMember(partyIndex, playerPkmn);
+    }
+
+    SceneTransition.fadeOut(this, 300, () => {
+      this.scene.start("OverworldScene", { returnFromBattle: true, whiteout });
+    });
   }
 
   // ─── Event Processing Engine ───────────────────────────────────────────────
@@ -708,12 +773,24 @@ export class BattleScene extends Phaser.Scene {
       maxHp: hp,
       stats,
       moves,
-      types: species.types
+      types: species.types,
+      exp: Math.pow(level, 3)
     };
   }
 
   private getSpeciesName(speciesId: number): string {
     const species = this.pokemonData.find((s) => s.id === speciesId);
     return species ? species.name : "Pokémon";
+  }
+
+  shutdown(): void {
+    // Destroy all display objects explicitly
+    this.children.removeAll(true);
+    // Clear all tweens
+    this.tweens.killAll();
+    // Clear all time events
+    this.time.removeAllEvents();
+    // Reset battle state
+    this.battleState = null as any;
   }
 }

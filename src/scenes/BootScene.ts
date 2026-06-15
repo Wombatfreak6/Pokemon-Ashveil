@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { SceneTransition } from "@systems/SceneTransition";
 
 /**
  * BootScene — loads all game assets and shows a loading bar.
@@ -48,6 +49,7 @@ export class BootScene extends Phaser.Scene {
     this.load.json("moves-data", "assets/data/moves.json");
     this.load.json("type-chart", "assets/data/typeChart.json");
     this.load.json("trainers-data", "assets/data/trainers.json");
+    this.load.json("encounters-data", "assets/data/encounters.json");
   }
 
   create(): void {
@@ -57,7 +59,9 @@ export class BootScene extends Phaser.Scene {
     this.createNpcTexture();
     this.createBattleSprites();
 
-    this.scene.start("OverworldScene");
+    SceneTransition.fadeOut(this, 300, () => {
+      this.scene.start("TitleScene");
+    });
   }
 
   // ---------------------------------------------------------------------------

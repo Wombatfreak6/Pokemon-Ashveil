@@ -1,0 +1,14 @@
+{
+  "tables": [
+    {
+      "mapKey": "test-map",
+      "grassTileIds": [2, 3],
+      "encounterRate": 8,
+      "pokemon": [
+        { "speciesId": 4, "minLevel": 3, "maxLevel": 5, "weight": 45 },
+        { "speciesId": 5, "minLevel": 3, "maxLevel": 5, "weight": 45 },
+        { "speciesId": 6, "minLevel": 4, "maxLevel": 6, "weight": 10 }
+      ]
+    }
+  ]
+}

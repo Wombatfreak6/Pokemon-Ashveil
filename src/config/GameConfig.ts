@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { BootScene } from "@scenes/BootScene";
+import { TitleScene } from "@scenes/TitleScene";
 import { OverworldScene } from "@scenes/OverworldScene";
 import { BattleScene } from "@scenes/BattleScene";
 
@@ -37,5 +38,5 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
     },
   },
 
-  scene: [BootScene, OverworldScene, BattleScene],
+  scene: [BootScene, TitleScene, OverworldScene, BattleScene],
 };

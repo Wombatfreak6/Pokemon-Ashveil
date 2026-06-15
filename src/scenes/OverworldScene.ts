@@ -1,199 +1,160 @@
 import Phaser from "phaser";
 import { Player, TILE_SIZE } from "@entities/Player";
 import { NPC } from "@entities/NPC";
-import { InputController } from "@systems/InputController";
+import { InputController, type Direction } from "@systems/InputController";
 import { DialogueBox } from "@systems/DialogueBox";
 import type { DialogueSequence } from "@systems/DialogueTypes";
+import { GameStateManager } from "@systems/GameStateManager";
+import { EncounterManager, type EncountersData } from "@systems/EncounterManager";
+import { SceneTransition } from "@systems/SceneTransition";
 import { createBattlePokemon } from "@systems/BattleEngine";
 import type { PokemonSpecies, Move } from "@systems/BattleTypes";
 
-/**
- * OverworldScene — the main overworld / exploration scene.
- *
- * Responsibilities (Session 1 + 2):
- *   • Create and configure the Tiled tilemap
- *   • Instantiate the Player and wire up collision
- *   • Instantiate NPC entities from the "NPCs" object layer
- *   • Instantiate DialogueBox and load dialogue sequences from JSON cache
- *   • Set camera bounds and follow behaviour
- *   • Delegate all input handling to InputController
- *   • Delegate all player movement logic to Player
- *   • Gate player movement when dialogue is active
- *   • Handle confirm-key NPC interaction (face + adjacent check)
- *
- * CAMERA: Lerp-follow (lerpX/Y = 0.08) — smooth GBA-style tracking.
- *
- * CONFIRM KEY: Z / Enter / Space (edge-triggered via InputController).
- * See InputController.getConfirmJustPressed() for details.
- *
- * NPC INTERACTION:
- *   Player must be facing the NPC's tile (adjacent, correct direction).
- *   Pressing confirm triggers dialogue.  While dialogue is active all
- *   movement input is suppressed.
- */
 export class OverworldScene extends Phaser.Scene {
   private player!: Player;
   private inputCtrl!: InputController;
   private dialogueBox!: DialogueBox;
   private npcs: NPC[] = [];
   private dialogueMap = new Map<string, DialogueSequence>();
+  private encounterManager!: EncounterManager;
+  
+  private trainerTriggers: Array<{ x: number, y: number, trainerId: string, facing: Direction }> = [];
+  
+  private isTransitioning = false;
+  private groundLayer!: Phaser.Tilemaps.TilemapLayer;
+
+  // From init
+  private returnFromBattle = false;
+  private whiteout = false;
 
   constructor() {
     super({ key: "OverworldScene" });
   }
 
-  // ---------------------------------------------------------------------------
-  // create
-  // ---------------------------------------------------------------------------
+  init(data: any): void {
+    this.returnFromBattle = data?.returnFromBattle || false;
+    this.whiteout = data?.whiteout || false;
+    this.isTransitioning = false;
+  }
 
   create(): void {
+    const gameState = GameStateManager.getInstance();
+    
+    // Initialize EncounterManager
+    const encountersData = this.cache.json.get("encounters-data") as EncountersData;
+    this.encounterManager = new EncounterManager(encountersData);
+    this.encounterManager.loadTable(gameState.getState().lastMapKey);
+
     this.loadDialogueData();
     const map = this.createTilemap();
     this.createPlayer(map);
     this.createNpcs(map);
+    this.createTrainerTriggers(map);
     this.createDialogueBox();
     this.setupCamera(map);
 
-    // TEMP: remove in Session 4
-    if (this.input.keyboard) {
-      const bKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.B);
-      bKey.on("down", (event: KeyboardEvent) => {
-        if (this.dialogueBox.isActive()) return;
+    // Playtime tracking
+    this.time.addEvent({
+      delay: 1000,
+      loop: true,
+      callback: () => {
+        const state = gameState.getState();
+        gameState.updateState({ playTimeSeconds: state.playTimeSeconds + 1 });
+      }
+    });
 
-        const pokemonJson = this.cache.json.get("pokemon-data") as PokemonSpecies[];
-        const movesJson = this.cache.json.get("moves-data") as Move[];
-
-        const mudkipSpecies = pokemonJson.find((s) => s.id === 1);
-        if (!mudkipSpecies) return;
-
-        const playerParty = [createBattlePokemon(mudkipSpecies, movesJson, 10)];
-
-        if (event.shiftKey) {
-          // Shift+B: trainer battle with Garnet
-          this.scene.start("BattleScene", {
-            isWildBattle: false,
-            trainerId: "garnet",
-            playerParty
-          });
-        } else {
-          // B: wild battle with Rattata Lv 8
-          this.scene.start("BattleScene", {
-            isWildBattle: true,
-            wildSpeciesId: 5, // Rattata
-            wildLevel: 8,
-            playerParty
-          });
-        }
-      });
-    }
+    // Fade in
+    SceneTransition.fadeIn(this, 300, () => {
+      if (this.whiteout) {
+        this.dialogueBox.show({
+          id: "whiteout",
+          lines: [{ speaker: "", text: "Kael blacked out and scurried back to safety..." }]
+        });
+        this.whiteout = false;
+      }
+    });
   }
 
-  // ---------------------------------------------------------------------------
-  // update
-  // ---------------------------------------------------------------------------
-
   update(_time: number, delta: number): void {
-    // Always tick the dialogue box (typewriter reveal + blink)
+    if (this.isTransitioning) return;
+
     this.dialogueBox.update(delta);
 
     const confirm = this.inputCtrl.getConfirmJustPressed();
 
     if (this.dialogueBox.isActive()) {
-      // While dialogue is open: confirm advances, movement suppressed
       if (confirm) {
         this.dialogueBox.advance();
+        if (!this.dialogueBox.isActive()) {
+          // Check if aldwyn dialogue just finished
+          const currentSequence = (this.dialogueBox as any).sequence as DialogueSequence;
+          if (currentSequence?.id === "aldwyn") {
+            const gameState = GameStateManager.getInstance();
+            if (!gameState.getState().flags.aldwynMet) {
+              gameState.updateState({ flags: { aldwynMet: true } as any });
+              gameState.save();
+            }
+          }
+        }
       }
-      return; // DO NOT pass movement to player
+      return;
     }
 
-    // No dialogue active — handle movement normally
     const direction = this.inputCtrl.getDirection();
     this.player.handleInput(direction);
 
-    // Check for NPC interaction on confirm press
     if (confirm) {
       this.tryInteractNpc();
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Private helpers
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Load dialogue sequences from the JSON file cached in BootScene.
-   * Stores them in a Map<id, DialogueSequence> for O(1) lookup.
-   */
   private loadDialogueData(): void {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const raw: unknown = this.cache.json.get("dialogue-npcs");
-    if (!Array.isArray(raw)) {
-      console.warn("OverworldScene: dialogue-npcs JSON not found in cache.");
-      return;
-    }
+    if (!Array.isArray(raw)) return;
     for (const entry of raw as DialogueSequence[]) {
       this.dialogueMap.set(entry.id, entry);
     }
   }
 
-  /**
-   * Builds the tilemap, creates layers, and sets up collision.
-   * Returns the Tilemap object so other helpers can query its dimensions.
-   */
   private createTilemap(): Phaser.Tilemaps.Tilemap {
     const map = this.make.tilemap({ key: "test-map" });
-
-    // "tiles" is the Phaser texture key created in BootScene.
-    // The first arg must match the tileset name declared inside test_map.tmj.
     const tileset = map.addTilesetImage("placeholder_tiles", "tiles");
-    if (!tileset) {
-      throw new Error(
-        'OverworldScene: tileset "placeholder_tiles" not found in map.'
-      );
-    }
+    if (!tileset) throw new Error("Missing tileset");
 
-    // Ground layer — visual only, no collision
-    const groundLayer = map.createLayer("Ground", tileset, 0, 0);
-    if (!groundLayer) throw new Error("OverworldScene: Ground layer missing.");
-
-    // Collision layer — tiles here block the player.
-    const collisionLayer = map.createLayer("Collision", tileset, 0, 0);
-    if (!collisionLayer)
-      throw new Error("OverworldScene: Collision layer missing.");
-
-    // Make all non-empty tiles in the Collision layer solid.
+    this.groundLayer = map.createLayer("Ground", tileset, 0, 0)!;
+    const collisionLayer = map.createLayer("Collision", tileset, 0, 0)!;
     collisionLayer.setCollisionByExclusion([-1]);
-
-    // Semi-transparent collision layer for dev visibility.
     collisionLayer.setAlpha(0.35);
 
-    // Set physics world bounds to map pixel dimensions.
     this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
-
     return map;
   }
 
-  /**
-   * Instantiates the Player, wires collision against the tilemap, and
-   * creates the InputController.
-   */
   private createPlayer(map: Phaser.Tilemaps.Tilemap): void {
+    const gameState = GameStateManager.getInstance().getState();
+
     let spawnTileX = 3;
     let spawnTileY = 3;
+    let facing: Direction = "down";
 
-    const objectLayer = map.getObjectLayer("Spawns");
-    if (objectLayer) {
-      const spawnObj = objectLayer.objects.find(
-        (obj) => obj.name === "PlayerSpawn"
-      );
-      if (spawnObj && spawnObj.x !== undefined && spawnObj.y !== undefined) {
-        spawnTileX = Math.floor(spawnObj.x / (map.tileWidth ?? 16));
-        spawnTileY = Math.floor(spawnObj.y / (map.tileHeight ?? 16));
+    if (this.returnFromBattle && gameState.lastMapKey === "test-map") {
+      spawnTileX = gameState.lastPlayerTileX;
+      spawnTileY = gameState.lastPlayerTileY;
+      facing = gameState.lastPlayerFacing;
+    } else {
+      const objectLayer = map.getObjectLayer("Spawns");
+      if (objectLayer) {
+        const spawnObj = objectLayer.objects.find((obj) => obj.name === "PlayerSpawn");
+        if (spawnObj && spawnObj.x !== undefined && spawnObj.y !== undefined) {
+          spawnTileX = Math.floor(spawnObj.x / (map.tileWidth ?? 16));
+          spawnTileY = Math.floor(spawnObj.y / (map.tileHeight ?? 16));
+        }
       }
     }
 
     this.player = new Player(this, spawnTileX, spawnTileY);
     this.player.setMapBounds(map.widthInPixels, map.heightInPixels);
+    this.player.setFacing(facing);
 
     const collisionLayer = map.getLayer("Collision")?.tilemapLayer;
     if (collisionLayer) {
@@ -202,59 +163,63 @@ export class OverworldScene extends Phaser.Scene {
     }
 
     this.inputCtrl = new InputController(this);
+
+    // Wire up step complete handler
+    this.player.onStepComplete = (tileX, tileY) => this.onPlayerStep(tileX, tileY);
   }
 
-  /**
-   * Reads NPC objects from the Tiled "NPCs" object layer and creates NPC
-   * entities with distinct tints.
-   *
-   * Tiled object custom property: dialogueId (string)
-   * Coordinates in Tiled are pixel-based; we convert to tile coords.
-   */
   private createNpcs(map: Phaser.Tilemaps.Tilemap): void {
     const npcLayer = map.getObjectLayer("NPCs");
-    if (!npcLayer) {
-      console.warn('OverworldScene: No "NPCs" object layer found in map.');
-      return;
-    }
+    if (!npcLayer) return;
 
-    // Distinct tints for each NPC so they're visually identifiable
     const tints = [0x44ccff, 0xff8844, 0x88ff44];
     let tintIndex = 0;
+    const blockedTiles = new Set<string>();
 
     for (const obj of npcLayer.objects) {
       if (obj.x === undefined || obj.y === undefined) continue;
 
-      // Tiled places object origin at the bottom-left of the tile for point objects
       const tileX = Math.floor(obj.x / (map.tileWidth ?? 16));
       const tileY = Math.floor(obj.y / (map.tileHeight ?? 16));
 
-      // Read the dialogueId custom property
       const dialogueId = this.getTiledProperty<string>(obj, "dialogueId");
-      if (!dialogueId) {
-        console.warn(`OverworldScene: NPC "${obj.name}" has no dialogueId property.`);
-        continue;
-      }
+      if (!dialogueId) continue;
 
       const tint = tints[tintIndex % tints.length] ?? 0xffffff;
       tintIndex++;
 
       const npc = new NPC(this, tileX, tileY, dialogueId, tint);
       this.npcs.push(npc);
+      blockedTiles.add(`${tileX},${tileY}`);
+    }
+
+    if (this.player) {
+      this.player.setBlockedTiles(blockedTiles);
     }
   }
 
-  /**
-   * Creates the DialogueBox UI (screen-fixed, depth 20).
-   * The box starts hidden; show() is called when an NPC is interacted with.
-   */
+  private createTrainerTriggers(map: Phaser.Tilemaps.Tilemap): void {
+    const layer = map.getObjectLayer("TrainerTriggers");
+    if (!layer) return;
+
+    for (const obj of layer.objects) {
+      if (obj.x === undefined || obj.y === undefined) continue;
+      const tileX = Math.floor(obj.x / (map.tileWidth ?? 16));
+      const tileY = Math.floor(obj.y / (map.tileHeight ?? 16));
+      
+      const trainerId = this.getTiledProperty<string>(obj, "trainerId");
+      const facing = this.getTiledProperty<Direction>(obj, "facing");
+
+      if (trainerId && facing) {
+        this.trainerTriggers.push({ x: tileX, y: tileY, trainerId, facing });
+      }
+    }
+  }
+
   private createDialogueBox(): void {
     this.dialogueBox = new DialogueBox(this);
   }
 
-  /**
-   * Configures the main camera to follow the player within map bounds.
-   */
   private setupCamera(map: Phaser.Tilemaps.Tilemap): void {
     const cam = this.cameras.main;
     cam.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
@@ -262,19 +227,6 @@ export class OverworldScene extends Phaser.Scene {
     cam.startFollow(this.player, true, 0.08, 0.08);
   }
 
-  // ---------------------------------------------------------------------------
-  // Interaction
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Checks if the player is facing an NPC at the adjacent tile and, if so,
-   * triggers dialogue.
-   *
-   * Rules (classic Pokémon style):
-   *   - Player must be facing an adjacent tile (distance = 1 tile in that direction)
-   *   - The NPC must occupy exactly that tile
-   *   - If multiple NPCs somehow share a tile, only the first is triggered
-   */
   private tryInteractNpc(): void {
     const facing = this.player.getFacing();
     const playerTileX = Math.round((this.player.x - TILE_SIZE / 2) / TILE_SIZE);
@@ -283,37 +235,106 @@ export class OverworldScene extends Phaser.Scene {
     const targetTileX = playerTileX + (facing === "left" ? -1 : facing === "right" ? 1 : 0);
     const targetTileY = playerTileY + (facing === "up" ? -1 : facing === "down" ? 1 : 0);
 
-    const npc = this.npcs.find(
-      (n) => n.tileX === targetTileX && n.tileY === targetTileY
-    );
-
-    if (!npc) return; // No NPC in front — silent no-op
+    const npc = this.npcs.find((n) => n.tileX === targetTileX && n.tileY === targetTileY);
+    if (!npc) return;
 
     const sequence = npc.getDialogue(this.dialogueMap);
-    if (!sequence) {
-      console.warn(`OverworldScene: No dialogue found for id "${npc.dialogueId}".`);
-      return;
-    }
+    if (!sequence) return;
 
     this.dialogueBox.show(sequence);
   }
 
-  // ---------------------------------------------------------------------------
-  // Utilities
-  // ---------------------------------------------------------------------------
+  private onPlayerStep(tileX: number, tileY: number): void {
+    if (this.isTransitioning) return;
 
-  /**
-   * Reads a Tiled object's custom property by name.
-   * Returns undefined if the property doesn't exist.
-   */
-  private getTiledProperty<T>(
-    obj: Phaser.Types.Tilemaps.TiledObject,
-    name: string
-  ): T | undefined {
+    const tile = this.groundLayer.getTileAt(tileX, tileY);
+    if (tile) {
+      const encounter = this.encounterManager.onPlayerStep(tile.index);
+      if (encounter) {
+        this.startWildBattle(encounter.speciesId, encounter.level);
+        return;
+      }
+    }
+
+    this.checkTrainerLineOfSight(tileX, tileY);
+  }
+
+  private checkTrainerLineOfSight(playerX: number, playerY: number): void {
+    const gameState = GameStateManager.getInstance();
+
+    for (const t of this.trainerTriggers) {
+      if (gameState.isTrainerDefeated(t.trainerId)) continue;
+
+      let inSight = false;
+      
+      if (t.facing === "down" && playerX === t.x && playerY > t.y && playerY <= t.y + 3) inSight = true;
+      if (t.facing === "up" && playerX === t.x && playerY < t.y && playerY >= t.y - 3) inSight = true;
+      if (t.facing === "right" && playerY === t.y && playerX > t.x && playerX <= t.x + 3) inSight = true;
+      if (t.facing === "left" && playerY === t.y && playerX < t.x && playerX >= t.x - 3) inSight = true;
+
+      if (inSight) {
+        this.startTrainerBattle(t.trainerId);
+        return;
+      }
+    }
+  }
+
+  private saveMapStateBeforeBattle(): void {
+    const gameState = GameStateManager.getInstance();
+    const playerTileX = Math.round((this.player.x - TILE_SIZE / 2) / TILE_SIZE);
+    const playerTileY = Math.round((this.player.y - TILE_SIZE / 2) / TILE_SIZE);
+    
+    // Ensure player has at least one valid party member for battle if they don't already
+    let party = gameState.getState().party;
+    if (party.length === 0) {
+      const pokemonJson = this.cache.json.get("pokemon-data") as PokemonSpecies[];
+      const movesJson = this.cache.json.get("moves-data") as Move[];
+      const mudkip = pokemonJson.find((s) => s.id === 1)!;
+      party = [createBattlePokemon(mudkip, movesJson, 10)];
+    }
+
+    gameState.updateState({
+      lastMapKey: "test-map",
+      lastPlayerTileX: playerTileX,
+      lastPlayerTileY: playerTileY,
+      lastPlayerFacing: this.player.getFacing(),
+      party: party
+    });
+  }
+
+  private startWildBattle(speciesId: number, level: number): void {
+    this.isTransitioning = true;
+    this.saveMapStateBeforeBattle();
+    const gameState = GameStateManager.getInstance().getState();
+
+    SceneTransition.fadeOut(this, 300, () => {
+      this.scene.start("BattleScene", {
+        isWildBattle: true,
+        wildSpeciesId: speciesId,
+        wildLevel: level,
+        playerParty: gameState.party
+      });
+    });
+  }
+
+  private startTrainerBattle(trainerId: string): void {
+    this.isTransitioning = true;
+    this.saveMapStateBeforeBattle();
+    const gameState = GameStateManager.getInstance().getState();
+
+    SceneTransition.fadeOut(this, 300, () => {
+      this.scene.start("BattleScene", {
+        isWildBattle: false,
+        trainerId: trainerId,
+        playerParty: gameState.party
+      });
+    });
+  }
+
+  private getTiledProperty<T>(obj: Phaser.Types.Tilemaps.TiledObject, name: string): T | undefined {
     if (!obj.properties) return undefined;
-    const prop = (obj.properties as Array<{ name: string; value: unknown }>).find(
-      (p) => p.name === name
-    );
+    const prop = (obj.properties as Array<{ name: string; value: unknown }>).find((p) => p.name === name);
     return prop?.value as T | undefined;
   }
 }
+

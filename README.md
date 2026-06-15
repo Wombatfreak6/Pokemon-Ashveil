@@ -40,13 +40,27 @@ Pokemon-ashveil/
 ├── src/
 │   ├── config/
 │   │   └── GameConfig.ts         ← Phaser game config (resolution, physics)
+│   ├── data/
+│   │   ├── pokemon.json          ← Species stats and learnsets
+│   │   ├── moves.json            ← Move definitions
+│   │   ├── typeChart.json        ← Type effectiveness
+│   │   ├── trainers.json         ← Trainer party data
+│   │   └── encounters.json       ← Wild encounter tables
 │   ├── entities/
-│   │   └── Player.ts             ← Player sprite, grid movement, animations
+│   │   ├── Player.ts             ← Player sprite, grid movement, animations
+│   │   └── NPC.ts                ← Non-player characters
 │   ├── scenes/
 │   │   ├── BootScene.ts          ← Asset loading, procedural placeholder textures
-│   │   └── OverworldScene.ts     ← Main map scene, camera, collision
+│   │   ├── TitleScene.ts         ← GBA-style Title screen and Save management
+│   │   ├── OverworldScene.ts     ← Main map scene, camera, collision
+│   │   └── BattleScene.ts        ← Turn-based battle system UI and logic
 │   ├── systems/
-│   │   └── InputController.ts    ← Arrow keys + WASD abstraction
+│   │   ├── InputController.ts    ← Arrow keys + WASD abstraction
+│   │   ├── DialogueBox.ts        ← Typewriter dialogue rendering
+│   │   ├── BattleEngine.ts       ← Pure TS battle damage/turn resolution
+│   │   ├── GameStateManager.ts   ← Pure TS save and state singleton
+│   │   ├── EncounterManager.ts   ← Wild encounter logic
+│   │   └── SceneTransition.ts    ← GBA-style screen fades
 │   └── main.ts                   ← Phaser.Game entry point
 ├── index.html                    ← Vite HTML entry point
 ├── tsconfig.json

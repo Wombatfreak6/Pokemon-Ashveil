@@ -157,6 +157,81 @@
                          "type":"string",
                          "value":"npc_wanderer"
                         }]
+                },
+                {
+                 "height":0,
+                 "id":5,
+                 "name":"npc_aldwyn",
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":48,
+                 "y":48,
+                 "properties":[
+                        {
+                         "name":"dialogueId",
+                         "type":"string",
+                         "value":"aldwyn"
+                        }]
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        },
+        {
+         "draworder":"topdown",
+         "id":5,
+         "name":"TrainerTriggers",
+         "objects":[
+                {
+                 "height":0,
+                 "id":6,
+                 "name":"joey_trigger",
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":160,
+                 "y":48,
+                 "properties":[
+                        {
+                         "name":"trainerId",
+                         "type":"string",
+                         "value":"route_trainer_1"
+                        },
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"down"
+                        }]
+                },
+                {
+                 "height":0,
+                 "id":7,
+                 "name":"robin_trigger",
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":48,
+                 "y":256,
+                 "properties":[
+                        {
+                         "name":"trainerId",
+                         "type":"string",
+                         "value":"route_trainer_2"
+                        },
+                        {
+                         "name":"facing",
+                         "type":"string",
+                         "value":"right"
+                        }]
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -164,8 +239,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":5,
- "nextobjectid":5,
+ "nextlayerid":6,
+ "nextobjectid":8,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.10.0",

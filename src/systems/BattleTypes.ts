@@ -24,6 +24,7 @@ export interface BattlePokemon {
   moves: BattleMove[];
   types: string[];
   status?: "poison" | "burn" | "sleep" | "paralysis" | null;
+  exp: number;
 }
 
 export interface BattleState {
