@@ -118,4 +118,12 @@ export class InputController {
       Phaser.Input.Keyboard.JustDown(key)
     );
   }
+
+  getUpJustPressed(): boolean {
+    return Phaser.Input.Keyboard.JustDown(this.cursors.up) || Phaser.Input.Keyboard.JustDown(this.wasd.up);
+  }
+
+  getDownJustPressed(): boolean {
+    return Phaser.Input.Keyboard.JustDown(this.cursors.down) || Phaser.Input.Keyboard.JustDown(this.wasd.down);
+  }
 }

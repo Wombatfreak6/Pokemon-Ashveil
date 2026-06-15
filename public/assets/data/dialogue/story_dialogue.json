@@ -1,0 +1,157 @@
+{
+  "kaels_father": [
+    {
+      "text": "The light needs tending while you're gone. I'll keep it burning.",
+      "speaker": "Father"
+    },
+    {
+      "text": "Your mother always said the fog remembers what we forget.",
+      "speaker": "Father"
+    },
+    {
+      "text": "Come back safe, Kael.",
+      "speaker": "Father"
+    }
+  ],
+  "aldwyn_mirefall": [
+    {
+      "text": "Kael. I found this at the university — someone mailed it anonymously from Ashenveil Vale, months ago.",
+      "speaker": "Aldwyn"
+    },
+    {
+      "text": "It's your mother's field journal. The last pages describe something beneath the Ashveil Hollow. Something dreaming.",
+      "speaker": "Aldwyn"
+    },
+    {
+      "text": "Take one of these Pokémon. You'll need a partner where you're going.",
+      "speaker": "Aldwyn"
+    },
+    {
+      "text": "The journal's incomplete. But it points toward Cinderpeak first. Be careful.",
+      "speaker": "Aldwyn"
+    }
+  ],
+  "aldwyn_mirefall_repeat": [
+    {
+      "text": "The fog's been thin lately. Watch yourself on Route 2.",
+      "speaker": "Aldwyn"
+    }
+  ],
+  "sable_mirefall": [
+    {
+      "text": "Oh. You're actually going. I thought you'd stay and polish the lighthouse or something.",
+      "speaker": "Sable"
+    },
+    {
+      "text": "Try to keep up.",
+      "speaker": "Sable"
+    }
+  ],
+  "mirefall_villager_dock": [
+    {
+      "text": "The fishing's been strange lately. Tentacool won't come near the harbor."
+    },
+    {
+      "text": "The Veil's different too. Thinner, somehow. Like something's missing."
+    }
+  ],
+  "mirefall_elder": [
+    {
+      "text": "I remember when the fog was so thick you couldn't see your hand at arm's length. Now look at it."
+    },
+    {
+      "text": "They say the mist remembers the dead. I hope that's not all it remembers."
+    }
+  ],
+  "route2_sign": [
+    {
+      "text": "ROUTE 2 — Watch for Growlithe in the tall grass. They bite."
+    }
+  ],
+  "route2_hiker": [
+    {
+      "text": "Heading to Cinderpeak? The forge town. They say the gym leader there came up through the same fire she trains with."
+    },
+    {
+      "text": "Don't let her Arcanine rattle you. Keep your head."
+    }
+  ],
+  "growlithe_first_encounter": [
+    {
+      "text": "A Growlithe crouches behind a rock. A burn scar runs across its left flank."
+    },
+    {
+      "text": "It watches you with cautious eyes. It doesn't flee — but it doesn't come closer either."
+    },
+    {
+      "text": "Maybe if you had something to offer..."
+    }
+  ],
+  "pokecenter_nurse": [
+    {
+      "text": "Welcome. Your Pokémon look like they've been through it.",
+      "speaker": "Nurse"
+    },
+    {
+      "text": "Let me take care of them.",
+      "speaker": "Nurse"
+    }
+  ],
+  "cinderpeak_worker": [
+    {
+      "text": "Garnet's been in the gym for three days straight. She does that before a challenger comes."
+    },
+    {
+      "text": "She knows things, that woman. Don't ask me how."
+    }
+  ],
+  "cinderpeak_child": [
+    {
+      "text": "Nobody beats Garnet on their first try. Nobody."
+    }
+  ],
+  "gym_gate_guard": [
+    {
+      "text": "The Ember Badge waits inside. Show Garnet what you've got.",
+      "speaker": "Guard"
+    }
+  ],
+  "gym_gate_guard_block": [
+    {
+      "text": "You can't challenge the gym without a Pokémon. Go see Professor Aldwyn in Mirefall.",
+      "speaker": "Guard"
+    }
+  ],
+  "garnet_pre_battle": [
+    {
+      "text": "You've come a long way from Mirefall. I can see it in how you stand.",
+      "speaker": "Garnet"
+    },
+    {
+      "text": "Your mother came through here. She was looking for something worth protecting.",
+      "speaker": "Garnet"
+    },
+    {
+      "text": "I wonder if you've found it yet.",
+      "speaker": "Garnet"
+    },
+    {
+      "text": "Let's see what you're made of. I won't hold back.",
+      "speaker": "Garnet"
+    }
+  ],
+  "garnet_post_battle": [
+    {
+      "text": "The Ember Badge is yours. You've earned it.",
+      "speaker": "Garnet"
+    },
+    {
+      "text": "That Pokémon of yours — it trusts you. Don't forget that's what makes the difference.",
+      "speaker": "Garnet"
+    },
+    {
+      "text": "The road north gets harder. Whatever your mother found up there... be ready for it.",
+      "speaker": "Garnet"
+    }
+  ]
+}

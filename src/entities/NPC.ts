@@ -56,4 +56,8 @@ export class NPC extends Phaser.GameObjects.Sprite {
   ): DialogueSequence | null {
     return sequences.get(this.dialogueId) ?? null;
   }
+
+  getDialogueId(): string {
+    return this.dialogueId;
+  }
 }

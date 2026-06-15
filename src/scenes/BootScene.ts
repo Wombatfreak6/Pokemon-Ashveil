@@ -36,13 +36,14 @@ export class BootScene extends Phaser.Scene {
   preload(): void {
     this.createLoadingBar();
 
-    // Load the Tiled JSON map. Vite serves files in /public as root-relative paths.
-    this.load.tilemapTiledJSON("test-map", "assets/maps/test_map.tmj");
+    this.load.tilemapTiledJSON("mirefall", "assets/maps/mirefall.tmj");
+    this.load.tilemapTiledJSON("route2", "assets/maps/route2.tmj");
+    this.load.tilemapTiledJSON("cinderpeak", "assets/maps/cinderpeak.tmj");
+    this.load.tilemapTiledJSON("garnet_gym", "assets/maps/garnet_gym.tmj");
 
-    // Load dialogue data. Loaded as a JSON file — Phaser.Loader.LoaderPlugin
-    // stores it under the key 'dialogue-npcs' and it is retrieved in
-    // OverworldScene via this.cache.json.get('dialogue-npcs').
+    // Load dialogue data.
     this.load.json("dialogue-npcs", "assets/data/dialogue/test_npcs.json");
+    this.load.json("story-dialogue", "assets/data/dialogue/story_dialogue.json");
 
     // Load battle data files
     this.load.json("pokemon-data", "assets/data/pokemon.json");
@@ -129,7 +130,7 @@ export class BootScene extends Phaser.Scene {
    */
   private createTilesetTexture(): void {
     const TILE = 16;
-    const COLS = 8;
+    const COLS = 24;
 
     if (this.textures.exists("tiles")) {
       this.textures.remove("tiles");
@@ -149,12 +150,28 @@ export class BootScene extends Phaser.Scene {
       "#c8a860", // 5 sand
       "#4a8c3f", // 6 flowers base
       "#222230", // 7 void
+      "#1a6b8a", // 8 Water deep blue
+      "#c8c8c8", // 9 Lighthouse stone
+      "#c8a87d", // 10 Path beige
+      "#5c3a1e", // 11 Building brown
+      "#8B6347", // 12 Dock wood
+      "#4CAF50", // 13 Tall grass
+      "#7a6a5a", // 14 Rocky ground
+      "#4a4a4a", // 15 Rock obstacle
+      "#b5651d", // 16 Forge ochre
+      "#8B3A00", // 17 Hot stone
+      "#2a1a0a", // 18 Volcanic rock
+      "#3a3a3a", // 19 Gym floor
+      "#ff4400", // 20 Braziers/Fire
+      "#222230", // 21 void
+      "#222230", // 22 void
+      "#222230", // 23 void
     ];
 
     for (let i = 0; i < COLS; i++) {
       const x = i * TILE;
 
-      c.fillStyle = palette[i];
+      c.fillStyle = palette[i] || "#FF00FF";
       c.fillRect(x, 0, TILE, TILE);
 
       // Detail markings
@@ -194,6 +211,31 @@ export class BootScene extends Phaser.Scene {
         c.fillRect(x + 10, 9, 2, 2);
         c.fillStyle = "#eecc44";
         c.fillRect(x + 7, 3, 2, 2);
+      } else if (i === 8) {
+        // Deep water ripples
+        c.globalAlpha = 0.2;
+        c.fillStyle = "#ffffff";
+        c.fillRect(x + 2, 4, 5, 1);
+        c.fillRect(x + 9, 8, 4, 1);
+      } else if (i === 9) {
+        // Lighthouse stone bricks
+        c.globalAlpha = 0.15;
+        c.fillStyle = "#000000";
+        c.fillRect(x, 7, TILE, 1);
+        c.fillRect(x + 8, 0, 1, 7);
+        c.fillRect(x + 4, 8, 1, 8);
+      } else if (i === 13) {
+        // Tall grass marks
+        c.globalAlpha = 0.3;
+        c.fillStyle = "#1b5e20";
+        c.fillRect(x + 2, 2, 1, 6);
+        c.fillRect(x + 8, 4, 1, 8);
+        c.fillRect(x + 12, 1, 1, 5);
+      } else if (i === 20) {
+        // Fire detail
+        c.globalAlpha = 0.8;
+        c.fillStyle = "#ffcc00";
+        c.fillRect(x + 6, 6, 4, 4);
       }
 
       c.globalAlpha = 1;

@@ -40,6 +40,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private collisionLayer: Phaser.Tilemaps.TilemapLayer | null = null;
   private blockedTiles = new Set<string>();
 
+  public getBlockedTiles(): Set<string> {
+    return this.blockedTiles;
+  }
+
   // World bounds (pixels) — set from the map dimensions.
   private mapWidth = 0;
   private mapHeight = 0;

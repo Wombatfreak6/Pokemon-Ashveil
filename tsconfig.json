@@ -28,7 +28,8 @@
       "@scenes/*": ["src/scenes/*"],
       "@entities/*": ["src/entities/*"],
       "@systems/*": ["src/systems/*"],
-      "@config/*": ["src/config/*"]
+      "@config/*": ["src/config/*"],
+      "@data/*": ["src/data/*"]
     }
   },
   "include": ["src"]

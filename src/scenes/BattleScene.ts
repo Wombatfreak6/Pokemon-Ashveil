@@ -402,6 +402,52 @@ export class BattleScene extends Phaser.Scene {
 
             this.battleState = turnResult.newState;
             this.eventsQueue = turnResult.events;
+
+            // Intercept victory to calculate level up and inject message
+            const phaseChangeIndex = this.eventsQueue.findIndex(e => e.type === "phaseChange" && (e as any).phase === "victory");
+            if (phaseChangeIndex !== -1) {
+              const enemyBaseExp = this.pokemonData.find(s => s.id === this.battleState.enemyPokemon.speciesId)?.baseExp || 50;
+              const a = this.battleState.isWildBattle ? 1.0 : 1.5;
+              const expGain = Math.floor((a * enemyBaseExp * this.battleState.enemyPokemon.level) / 7);
+              
+              const playerPkmn = this.battleState.playerPokemon;
+              playerPkmn.exp += expGain;
+
+              let levelUpThreshold = Math.pow(playerPkmn.level + 1, 3);
+              let newLevel = playerPkmn.level;
+              
+              while (playerPkmn.exp >= levelUpThreshold && newLevel < 100) {
+                newLevel++;
+                levelUpThreshold = Math.pow(newLevel + 1, 3);
+              }
+
+              if (newLevel > playerPkmn.level) {
+                playerPkmn.level = newLevel;
+                const species = this.pokemonData.find(s => s.id === playerPkmn.speciesId);
+                const speciesName = species?.name || "Pokémon";
+                
+                // Recalculate stats
+                if (species) {
+                  const hpDiff = playerPkmn.maxHp;
+                  playerPkmn.maxHp = Math.floor(((2 * species.baseStats.hp + 31) * newLevel) / 100) + newLevel + 10;
+                  playerPkmn.currentHp += (playerPkmn.maxHp - hpDiff);
+                  playerPkmn.stats = {
+                    atk: Math.floor(((2 * species.baseStats.atk + 31) * newLevel) / 100) + 5,
+                    def: Math.floor(((2 * species.baseStats.def + 31) * newLevel) / 100) + 5,
+                    spAtk: Math.floor(((2 * species.baseStats.spAtk + 31) * newLevel) / 100) + 5,
+                    spDef: Math.floor(((2 * species.baseStats.spDef + 31) * newLevel) / 100) + 5,
+                    speed: Math.floor(((2 * species.baseStats.speed + 31) * newLevel) / 100) + 5
+                  };
+                }
+
+                // Inject level up message before phaseChange
+                this.eventsQueue.splice(phaseChangeIndex, 0, {
+                  type: "message",
+                  text: `${speciesName} grew to level ${newLevel}!`
+                });
+              }
+            }
+
             this.processNextEvent();
           } else {
             // Flash red on PP error (or simple print message)
@@ -449,43 +495,22 @@ export class BattleScene extends Phaser.Scene {
     let partyIndex = 0; // Assuming single player pokemon for now
 
     if (this.battleState.phase === "victory") {
-      // Calculate EXP
-      const enemyBaseExp = this.pokemonData.find(s => s.id === this.battleState.enemyPokemon.speciesId)?.baseExp || 50;
-      const expGain = Math.floor((enemyBaseExp * this.battleState.enemyPokemon.level) / 7);
-      
       const playerPkmn = this.battleState.playerPokemon;
-      playerPkmn.exp += expGain;
-
-      // Calculate Level Up Threshold (Level ^ 3)
-      let levelUpThreshold = Math.pow(playerPkmn.level + 1, 3);
-      let newLevel = playerPkmn.level;
-      
-      while (playerPkmn.exp >= levelUpThreshold && newLevel < 100) {
-        newLevel++;
-        levelUpThreshold = Math.pow(newLevel + 1, 3);
-      }
-
-      if (newLevel > playerPkmn.level) {
-        playerPkmn.level = newLevel;
-        // Recalculate stats
-        const species = this.pokemonData.find(s => s.id === playerPkmn.speciesId);
-        if (species) {
-          const hpDiff = playerPkmn.maxHp;
-          playerPkmn.maxHp = Math.floor(((2 * species.baseStats.hp + 31) * newLevel) / 100) + newLevel + 10;
-          playerPkmn.currentHp += (playerPkmn.maxHp - hpDiff); // Add diff to current hp
-          playerPkmn.stats = {
-            atk: Math.floor(((2 * species.baseStats.atk + 31) * newLevel) / 100) + 5,
-            def: Math.floor(((2 * species.baseStats.def + 31) * newLevel) / 100) + 5,
-            spAtk: Math.floor(((2 * species.baseStats.spAtk + 31) * newLevel) / 100) + 5,
-            spDef: Math.floor(((2 * species.baseStats.spDef + 31) * newLevel) / 100) + 5,
-            speed: Math.floor(((2 * species.baseStats.speed + 31) * newLevel) / 100) + 5
-          };
-        }
-      }
 
       // Add trainer to defeated list
       if (!this.battleState.isWildBattle && this.battleState.trainerId) {
         gameState.addDefeatedTrainer(this.battleState.trainerId);
+        
+        if (this.battleState.trainerId === "garnet") {
+          const state = gameState.getState();
+          gameState.updateState({
+            flags: {
+              ...state.flags,
+              garnetDefeated: true,
+              emberBadgeEarned: true
+            }
+          });
+        }
       }
       
       gameState.updatePartyMember(partyIndex, playerPkmn);

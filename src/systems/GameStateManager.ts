@@ -13,6 +13,7 @@ export interface GameState {
     mirefall_intro_seen: boolean;
     route2_unlocked: boolean;
     cinderpeak_unlocked: boolean;
+    aldwyn_mirefall_spoken: boolean;
   };
   lastMapKey: string;
   lastPlayerTileX: number;
@@ -37,10 +38,11 @@ const DEFAULT_STATE: GameState = {
     mirefall_intro_seen: false,
     route2_unlocked: false,
     cinderpeak_unlocked: false,
+    aldwyn_mirefall_spoken: false,
   },
-  lastMapKey: "test-map",
-  lastPlayerTileX: 9,
-  lastPlayerTileY: 9,
+  lastMapKey: "mirefall",
+  lastPlayerTileX: 5,
+  lastPlayerTileY: 12,
   lastPlayerFacing: "down",
   defeatedTrainers: [],
   stepCount: 0,

@@ -13,6 +13,7 @@ export default defineConfig({
       "@entities": path.resolve(__dirname, "src/entities"),
       "@systems": path.resolve(__dirname, "src/systems"),
       "@config": path.resolve(__dirname, "src/config"),
+      "@data": path.resolve(__dirname, "src/data"),
     },
   },
 
