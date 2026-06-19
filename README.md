@@ -189,6 +189,19 @@ These assets are original work created for this project and are released under
 **These assets MUST be replaced before any public release.**  
 See the _How to Add_ sections above for replacement instructions.
 
+### Pokémon Battle Sprites (Session 6)
+
+Battle sprites (front and back views) for the 8 demo species and Growlithe overworld
+walk frames were sourced from the **Black / White** generation sprite set:
+
+| Source | Format | Species covered |
+|--------|--------|-----------------|
+| [PokéAPI sprite repository](https://github.com/PokeAPI/sprites) | PNG, transparent BG | mudkip, torchic, treecko, pidgey, rattata, growlithe, magmar, arcanine |
+| [Pokémon Database](https://pokemondb.net/sprites) | PNG, transparent BG | Same 8 species |
+
+All Pokémon sprites are © Nintendo / Game Freak / Creatures Inc.  
+Used here solely for non-commercial, educational fan-game purposes.
+
 ### Reference Architecture
 
 This project's architecture is inspired by  
@@ -205,17 +218,19 @@ a Vite build system — no code from the original repository is used.
 | Session | Date | Status | Summary |
 |---------|------|--------|---------|
 | Session 1 | 2026-06-13 | ✅ Complete | Foundation: Vite+TS+Phaser 3, tilemap, grid movement, collision, camera |
-| Session 2 | 2026-06-14 | ✅ Complete | Dialogue & NPCs: GBA text box, Tiled object mapping, confirm interact, input buffering. Patch: fixed dialogue text overflow (2-line pagination) and blurry text rendering (by removing custom resolution overrides, setting native font size to exactly 16px, reverting to monospace, and rounding coordinates). |
-| Session 3 | 2026-06-14 | ✅ Complete | Turn-based battle system (Phase 1): state-driven battle engine, Gen 1/2 formulas, type matchups, menu navigation, and procedural battle sprites. Patch: Added `recoil` field to Move interface to support Flare Blitz, and confirmed `X` key as Cancel/B-button control. |
+| Session 2 | 2026-06-14 | ✅ Complete | Dialogue & NPCs: GBA text box, Tiled object mapping, confirm interact, input buffering. |
+| Session 3 | 2026-06-14 | ✅ Complete | Turn-based battle system: state-driven engine, Gen 1/2 formulas, type matchups, menu navigation, procedural battle sprites. |
+| Session 4 | 2026-06-15 | ✅ Complete | Save/load, wild encounters, trainer triggers, scene transitions, title screen, whiteout. |
+| Session 5 | 2026-06-15 | ✅ Complete | Ashveil story arc: Mirefall, Route 2, Cinderpeak, Garnet Gym. Dynamic map loading, starter selection, Growlithe encounter, badge ceremony. |
+| Session 6 | 2026-06-19 | ✅ Complete | Sprite swap: replaced all 8 demo-species procedural battle placeholders with real BW-generation PNG sprites. Added Growlithe animated overworld sprite (2-frame idle). |
 
 ---
 
-## Known Issues / TODOs for Session 3
+## Known Issues / TODOs
 
-- Placeholder procedural art needs replacing with real pixel sprites
+- Player (Kael) sprite is still procedurally generated — real art pending
 - No tile extrusion (not needed for procedural textures; add if using real tilesets with bleeding)
 - No audio system
-- No scene transitions (beyond Boot → Overworld)
 - Camera lerp value (0.08) may need tuning once real map size is known
 
 ---

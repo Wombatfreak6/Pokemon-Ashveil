@@ -196,12 +196,15 @@ export class OverworldScene extends Phaser.Scene {
       const g = growlitheLayer.objects[0];
       this.growlitheZone = { x: g.x || 0, y: g.y || 0, w: g.width || 0, h: g.height || 0 };
       
-      // Inject Growlithe NPC if not caught
+      // Inject Growlithe NPC if not caught — use real overworld sprite + idle anim
       if (!GameStateManager.getInstance().getState().flags.growlitheCaught) {
          const gTileX = Math.floor((this.growlitheZone.x + 16) / 16);
          const gTileY = Math.floor((this.growlitheZone.y + 16) / 16);
-         const gNpc = new NPC(this, gTileX, gTileY, "growlithe_first_encounter", 0xff8800);
+         // Pass the real texture key; 0xffffff = no tint so sprite colours are unchanged
+         const gNpc = new NPC(this, gTileX, gTileY, "growlithe_first_encounter", 0xffffff, "growlithe_down_f1");
          gNpc.setDepth(5);
+         // Start the 2-frame idle animation registered in BootScene
+         gNpc.play("growlithe_idle_down");
          this.npcs.push(gNpc);
          this.player.getBlockedTiles().add(`${gTileX},${gTileY}`);
       }

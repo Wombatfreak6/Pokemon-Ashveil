@@ -30,13 +30,15 @@ export class NPC extends Phaser.GameObjects.Sprite {
     tileX: number,
     tileY: number,
     dialogueId: string,
-    tint: number = 0xffffff
+    tint: number = 0xffffff,
+    /** Optional texture key override. Defaults to the procedural "npc" canvas texture. */
+    textureKey: string = "npc"
   ) {
     // Centre of the tile in pixel space
     const pixelX = tileX * TILE_SIZE + TILE_SIZE / 2;
     const pixelY = tileY * TILE_SIZE + TILE_SIZE / 2;
 
-    super(scene, pixelX, pixelY, "npc");
+    super(scene, pixelX, pixelY, textureKey);
 
     this.dialogueId = dialogueId;
     this.tileX = tileX;

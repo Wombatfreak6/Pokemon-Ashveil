@@ -51,6 +51,24 @@ export class BootScene extends Phaser.Scene {
     this.load.json("type-chart", "assets/data/typeChart.json");
     this.load.json("trainers-data", "assets/data/trainers.json");
     this.load.json("encounters-data", "assets/data/encounters.json");
+
+    // ── Real battle sprites (Black/White generation) ───────────────────────
+    const demoSpecies = [
+      "mudkip", "torchic", "treecko",
+      "pidgey", "rattata", "growlithe",
+      "magmar", "arcanine"
+    ];
+    demoSpecies.forEach((name) => {
+      this.load.image(`battle_front_${name}`, `assets/sprites/battle/front/${name}.png`);
+      this.load.image(`battle_back_${name}`,  `assets/sprites/battle/back/${name}.png`);
+    });
+
+    // ── Growlithe overworld sprite frames (all 4 directions × 2 frames) ────
+    const dirs = ["down", "up", "left", "right"];
+    dirs.forEach((dir) => {
+      this.load.image(`growlithe_${dir}_f1`, `assets/sprites/overworld/${dir}/growlithe_f1.png`);
+      this.load.image(`growlithe_${dir}_f2`, `assets/sprites/overworld/${dir}/growlithe_f2.png`);
+    });
   }
 
   create(): void {
@@ -58,7 +76,25 @@ export class BootScene extends Phaser.Scene {
     this.createTilesetTexture();
     this.createPlayerTexture();
     this.createNpcTexture();
-    this.createBattleSprites();
+    // NOTE: Battle sprites are now loaded as real PNGs in preload() —
+    // createBattleSprites() has been removed.
+
+    // ── Register Growlithe idle animations (using loaded image frames) ────
+    const overworldDirs = ["down", "up", "left", "right"];
+    overworldDirs.forEach((dir) => {
+      const key = `growlithe_idle_${dir}`;
+      if (!this.anims.exists(key)) {
+        this.anims.create({
+          key,
+          frames: [
+            { key: `growlithe_${dir}_f1` },
+            { key: `growlithe_${dir}_f2` }
+          ],
+          frameRate: 2,
+          repeat: -1
+        });
+      }
+    });
 
     SceneTransition.fadeOut(this, 300, () => {
       this.scene.start("TitleScene");
@@ -452,54 +488,5 @@ export class BootScene extends Phaser.Scene {
     c.globalAlpha = 1;
 
     tex.refresh();
-  }
-
-  // ---------------------------------------------------------------------------
-  // Procedural battle sprites
-  // ---------------------------------------------------------------------------
-
-  private createBattleSprites(): void {
-    const speciesColors: Record<number, { name: string; color: string }> = {
-      1: { name: "mudkip", color: "#3a8cd8" },
-      2: { name: "torchic", color: "#f87820" },
-      3: { name: "treecko", color: "#38b858" },
-      4: { name: "pidgey", color: "#a88058" },
-      5: { name: "rattata", color: "#9060b0" },
-      6: { name: "growlithe", color: "#f06800" },
-      7: { name: "magmar", color: "#e03000" },
-      8: { name: "arcanine", color: "#f07820" }
-    };
-
-    for (const [idStr, data] of Object.entries(speciesColors)) {
-      const id = parseInt(idStr);
-
-      // Front sprite: 32x32 colored rectangle with eyes facing left
-      const frontKey = `pokemon_${id}_front`;
-      if (this.textures.exists(frontKey)) this.textures.remove(frontKey);
-      const frontTex = this.textures.createCanvas(frontKey, 32, 32);
-      if (frontTex) {
-        const c = frontTex.context;
-        c.fillStyle = data.color;
-        c.fillRect(4, 4, 24, 24);
-        c.fillStyle = "#1a1a2e"; // eyes
-        c.fillRect(8, 8, 2, 4);
-        c.fillStyle = "#ffffff";
-        c.fillRect(8, 8, 1, 2);
-        frontTex.refresh();
-      }
-
-      // Back sprite: 32x32 colored rectangle facing right-up
-      const backKey = `pokemon_${id}_back`;
-      if (this.textures.exists(backKey)) this.textures.remove(backKey);
-      const backTex = this.textures.createCanvas(backKey, 32, 32);
-      if (backTex) {
-        const c = backTex.context;
-        c.fillStyle = data.color;
-        c.fillRect(4, 4, 24, 24);
-        c.fillStyle = "rgba(0,0,0,0.15)"; // back head shade
-        c.fillRect(4, 4, 24, 12);
-        backTex.refresh();
-      }
-    }
   }
 }

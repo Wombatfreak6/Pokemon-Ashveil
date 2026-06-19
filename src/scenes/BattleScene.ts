@@ -155,15 +155,24 @@ export class BattleScene extends Phaser.Scene {
     const playerSpeciesId = this.battleState.playerPokemon.speciesId;
     const enemySpeciesId = this.battleState.enemyPokemon.speciesId;
 
-    this.playerSprite = this.add
-      .sprite(50, 115, `pokemon_${playerSpeciesId}_back`)
-      .setOrigin(0.5, 1)
-      .setDepth(spriteDepth);
+    const playerSpriteName = this.getSpeciesSpriteName(playerSpeciesId);
+    const enemySpriteName  = this.getSpeciesSpriteName(enemySpeciesId);
 
-    this.enemySprite = this.add
-      .sprite(180, 55, `pokemon_${enemySpeciesId}_front`)
+    // Player's own Pokémon: back sprite, lower-left platform.
+    // setOrigin(0.5, 1) anchors bottom-centre so sprite sits on the platform.
+    // setScale(1) — BW sprites are natively sized for small screens; no scaling needed.
+    this.playerSprite = this.add
+      .sprite(50, 115, `battle_back_${playerSpriteName}`)
       .setOrigin(0.5, 1)
-      .setDepth(spriteDepth);
+      .setDepth(spriteDepth)
+      .setScale(1);
+
+    // Enemy / wild Pokémon: front sprite, upper-right platform.
+    this.enemySprite = this.add
+      .sprite(180, 55, `battle_front_${enemySpriteName}`)
+      .setOrigin(0.5, 1)
+      .setDepth(spriteDepth)
+      .setScale(1);
 
     // ── Create UI Panels ──────────────────────────────────────────────────────
     const uiDepth = 10;
@@ -806,6 +815,16 @@ export class BattleScene extends Phaser.Scene {
   private getSpeciesName(speciesId: number): string {
     const species = this.pokemonData.find((s) => s.id === speciesId);
     return species ? species.name : "Pokémon";
+  }
+
+  /**
+   * Maps a species ID to the lowercase sprite-name used in asset keys.
+   * e.g. speciesId 7 → "magmar", matching battle_front_magmar / battle_back_magmar.
+   * Falls back to the procedural key pattern if somehow an unknown id is encountered.
+   */
+  private getSpeciesSpriteName(speciesId: number): string {
+    const species = this.pokemonData.find((s) => s.id === speciesId);
+    return species ? species.name.toLowerCase() : `unknown_${speciesId}`;
   }
 
   shutdown(): void {
